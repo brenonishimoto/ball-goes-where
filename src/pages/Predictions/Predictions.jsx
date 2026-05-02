@@ -5,7 +5,7 @@ import CupTablePage from '../CupTable/cupTable';
 import './Predictions.scss';
 
 export default function PredictionsPage() {
-  const { games } = useGames();
+  const { games, updateScore, save, clearData } = useGames();
   const totalPoints = calculateTotalPoints(games);
   const predictions = countPredictions(games);
 
@@ -38,7 +38,13 @@ export default function PredictionsPage() {
         </div>
       </section>
 
-      <CupTablePage editable />
+      <CupTablePage
+        editable
+        games={games}
+        updateScore={updateScore}
+        save={save}
+        clearData={clearData}
+      />
     </div>
   );
 }

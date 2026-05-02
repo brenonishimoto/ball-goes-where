@@ -5,8 +5,24 @@ import { GROUPS, ROUNDS } from '../../services/gameService';
 import { computeGroupStandings } from '../../utils/helpers';
 import './CupTable.scss';
 
-export default function CupTablePage({ editable = false }) {
-  const { games, updateScore, save, clearData } = useGames();
+export default function CupTablePage({
+  editable = false,
+  games: externalGames,
+  updateScore: externalUpdateScore,
+  save: externalSave,
+  clearData: externalClearData,
+}) {
+  const {
+    games: hookGames,
+    updateScore: hookUpdateScore,
+    save: hookSave,
+    clearData: hookClearData,
+  } = useGames();
+
+  const games = externalGames ?? hookGames;
+  const updateScore = externalUpdateScore ?? hookUpdateScore;
+  const save = externalSave ?? hookSave;
+  const clearData = externalClearData ?? hookClearData;
 
   const gamesByPhase = GROUPS.reduce((acc, group) => {
     acc[group.fase] = ROUNDS.map((round) => ({
@@ -58,6 +74,7 @@ export default function CupTablePage({ editable = false }) {
                       {computeGroupStandings(
                         games.filter((game) => game.fase === group.fase),
                         group.teams,
+                        editable ? 'prediction' : 'official',
                       ).map((row) => (
                         <tr key={row.team}>
                           <td>{row.team}</td>
