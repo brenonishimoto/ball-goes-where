@@ -3,8 +3,6 @@ import './GameInput.scss';
 export default function GameInput({
   game,
   onScoreChange,
-  onRemove,
-  showRemove = true,
 }) {
   const handleMandanteChange = (e) => {
     onScoreChange(game.id, e.target.value, game.placarV);
@@ -17,6 +15,10 @@ export default function GameInput({
   return (
     <div className="game-input">
       <div className="game-header">
+        <div className="game-meta">
+          <span>{game.data}</span>
+          <span>{game.hora}</span>
+        </div>
         <span className="game-phase">{game.fase}</span>
       </div>
 
@@ -24,7 +26,6 @@ export default function GameInput({
         <div className="teams-section">
           <div className="team">
             <span className="team-name">{game.mandante}</span>
-            <span className="team-label">Mandante</span>
           </div>
 
           <div className="score-inputs">
@@ -51,19 +52,8 @@ export default function GameInput({
 
           <div className="team">
             <span className="team-name">{game.visitante}</span>
-            <span className="team-label">Visitante</span>
           </div>
         </div>
-
-        {showRemove && (
-          <button
-            onClick={() => onRemove(game.id)}
-            className="btn-remove"
-            title="Remover jogo"
-          >
-            ✕
-          </button>
-        )}
       </div>
     </div>
   );
