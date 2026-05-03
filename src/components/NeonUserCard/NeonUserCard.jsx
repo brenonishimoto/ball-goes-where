@@ -1,6 +1,6 @@
 import Card from '../Card/Card';
 import { useNeonUser } from '../../hooks/useNeonUser';
-import './NeonUserCard.scss';
+import './neonusercard.scss';
 
 const formatValue = (value, fallback = 'Não informado') => value || fallback;
 
