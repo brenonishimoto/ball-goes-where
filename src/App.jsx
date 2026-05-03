@@ -6,7 +6,7 @@ import HomePage from './pages/Homepage/homepage';
 import CupTablePage from './pages/CupTable/cupTable';
 import PredictionsPage from './pages/Predictions/Predictions';
 import LeaderboardPage from './pages/Leaderboard/Leaderboard';
-import './App.scss';
+import './app.scss';
 
 function App() {
   return (

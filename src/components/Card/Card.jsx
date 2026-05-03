@@ -1,4 +1,4 @@
-import './Card.scss';
+import './card.scss';
 
 export default function Card({ children, className = '', ...props }) {
   return (
