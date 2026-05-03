@@ -1,5 +1,7 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react-swc'
+import fs from 'fs'
+import path from 'path'
 
 const readJsonBody = async (request) => {
   const chunks = []
@@ -23,12 +25,14 @@ const buildNeonSqlEndpoint = (databaseUrl) => {
 }
 
 const queryNeon = async (databaseUrl, query, params = []) => {
-  const response = await fetch(buildNeonSqlEndpoint(databaseUrl), {
+  const cleanDatabaseUrl = String(databaseUrl || '').replace(/^['\"]|['\"]$/g, '')
+
+  const response = await fetch(buildNeonSqlEndpoint(cleanDatabaseUrl), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      'Non-Connection-String': databaseUrl,
+      'Neon-Connection-String': cleanDatabaseUrl,
       'Neon-Raw-Text-Output': 'true',
       'Neon-Array-Mode': 'true',
     },
@@ -46,9 +50,80 @@ const queryNeon = async (databaseUrl, query, params = []) => {
 
 const neonApiPlugin = (env) => ({
   name: 'neon-api-plugin',
-  configureServer(server) {
+  async configureServer(server) {
+    // Run migrations once on dev server start (best-effort)
+    try {
+      const databaseUrl = env.DATABASE_URL || process.env.DATABASE_URL
+      if (databaseUrl) {
+        const sqlPath = path.resolve(process.cwd(), 'sql', 'neon-users.sql')
+        if (fs.existsSync(sqlPath)) {
+          const sql = fs.readFileSync(sqlPath, 'utf8')
+          const statements = sql
+            .split(';')
+            .map((s) => s.trim())
+            .filter(Boolean)
+
+          for (const stmt of statements) {
+            try {
+              await queryNeon(databaseUrl, stmt)
+            } catch (e) {
+              // eslint-disable-next-line no-console
+              console.warn('[neon-api-plugin] Migration statement failed (continuing):', e?.message ?? e)
+            }
+          }
+
+          // eslint-disable-next-line no-console
+          console.log('[neon-api-plugin] Migration statements applied (best-effort)')
+        }
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn('[neon-api-plugin] Migration runner error (continuing):', err?.message ?? err)
+    }
+
     server.middlewares.use(async (request, response, next) => {
       const requestUrl = new URL(request.url, 'http://localhost')
+
+      if (requestUrl.pathname === '/api/_migrate' && request.method === 'POST') {
+        const sendJson = (statusCode, payload) => {
+          response.statusCode = statusCode
+          response.setHeader('Content-Type', 'application/json; charset=utf-8')
+          response.end(JSON.stringify(payload))
+        }
+
+        const databaseUrl = env.DATABASE_URL || process.env.DATABASE_URL
+        if (!databaseUrl) {
+          sendJson(500, { error: 'DATABASE_URL não configurado.' })
+          return
+        }
+
+        try {
+          const sqlPath = path.resolve(process.cwd(), 'sql', 'neon-users.sql')
+          if (!fs.existsSync(sqlPath)) {
+            sendJson(404, { error: 'Arquivo de migration não encontrado.' })
+            return
+          }
+
+          const sql = fs.readFileSync(sqlPath, 'utf8')
+          const statements = sql.split(';').map((s) => s.trim()).filter(Boolean)
+          const results = []
+
+          for (const stmt of statements) {
+            try {
+              const res = await queryNeon(databaseUrl, stmt)
+              results.push({ statement: stmt.slice(0, 120), ok: true, rows: Array.isArray(res) ? res.length : null })
+            } catch (err) {
+              results.push({ statement: stmt.slice(0, 120), ok: false, error: String(err?.message ?? err) })
+            }
+          }
+
+          sendJson(200, { results })
+        } catch (err) {
+          sendJson(500, { error: String(err?.message ?? err) })
+        }
+
+        return
+      }
 
       if (requestUrl.pathname === '/api/users/sync' || requestUrl.pathname.startsWith('/api/users/')) {
         const sendJson = (statusCode, payload) => {
