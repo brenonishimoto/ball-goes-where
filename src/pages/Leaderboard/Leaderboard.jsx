@@ -1,5 +1,5 @@
 import Card from '../../components/Card/Card';
-import './leaderboard.scss';
+import './Leaderboard.scss';
 
 export default function LeaderboardPage() {
   return (

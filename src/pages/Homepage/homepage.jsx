@@ -1,7 +1,7 @@
 import { useGames } from '../../hooks/useGames';
 import { calculateTotalPoints, countPredictions } from '../../utils/helpers';
 import { GROUPS } from '../../services/gameService';
-import './homepage.scss';
+import './Homepage.scss';
 
 export default function HomePage() {
   const { games } = useGames();

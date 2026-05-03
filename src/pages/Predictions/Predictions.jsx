@@ -2,7 +2,7 @@ import { useGames } from '../../hooks/useGames';
 import { calculateTotalPoints, countPredictions } from '../../utils/helpers';
 import { GROUPS } from '../../services/gameService';
 import CupTablePage from '../CupTable/cupTable';
-import './predictions.scss';
+import './Predictions.scss';
 
 export default function PredictionsPage() {
   const { games, updateScore, save, clearData } = useGames();
