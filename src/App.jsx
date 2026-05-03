@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/react';
 import Header from './components/Header/header';
 import NeonUserCard from './components/NeonUserCard/NeonUserCard';
-import HomePage from './pages/Homepage/homepage';
+import HomePage from './pages/Homepage/Homepage';
 import CupTablePage from './pages/CupTable/cupTable';
 import PredictionsPage from './pages/Predictions/Predictions';
 import LeaderboardPage from './pages/Leaderboard/Leaderboard';

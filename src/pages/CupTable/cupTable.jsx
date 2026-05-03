@@ -3,7 +3,7 @@ import Card from '../../components/Card/Card';
 import GameInput from '../../components/GameInput/GameInput';
 import { GROUPS, ROUNDS } from '../../services/gameService';
 import { computeGroupStandings } from '../../utils/helpers';
-import './CupTable.scss';
+import './cupTable.scss';
 
 export default function CupTablePage({
   editable = false,
