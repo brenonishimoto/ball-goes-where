@@ -1,4 +1,4 @@
-import './gameinput.scss';
+import './GameInput.scss';
 
 export default function GameInput({
   game,
