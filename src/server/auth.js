@@ -108,6 +108,40 @@ export const verifyAuthToken = (token, secret) => {
 export const queryNeon = async (databaseUrl, query, params = []) => {
   const cleanDatabaseUrl = normalizeEnvValue(databaseUrl)
 
+  const normalizeRows = (payload) => {
+    if (!payload || typeof payload !== 'object') {
+      return []
+    }
+
+    const rows = Array.isArray(payload.rows) ? payload.rows : []
+
+    if (!rows.length) {
+      return []
+    }
+
+    if (!Array.isArray(rows[0])) {
+      return rows
+    }
+
+    const fieldNames = Array.isArray(payload.fields)
+      ? payload.fields.map((field) => field?.name).filter(Boolean)
+      : []
+
+    if (!fieldNames.length) {
+      return rows
+    }
+
+    return rows.map((row) => {
+      const normalizedRow = {}
+
+      fieldNames.forEach((fieldName, index) => {
+        normalizedRow[fieldName] = row[index]
+      })
+
+      return normalizedRow
+    })
+  }
+
   try {
     const parsedUrl = new URL(cleanDatabaseUrl)
     const apiHost = parsedUrl.hostname.replace(/^[^.]+\./, 'api.')
@@ -122,7 +156,6 @@ export const queryNeon = async (databaseUrl, query, params = []) => {
           Accept: 'application/json',
           'Neon-Connection-String': cleanDatabaseUrl,
           'Neon-Raw-Text-Output': 'true',
-          'Neon-Array-Mode': 'true',
         },
         body: JSON.stringify({ query, params }),
         signal: abortController.signal,
@@ -134,7 +167,7 @@ export const queryNeon = async (databaseUrl, query, params = []) => {
       }
 
       const payload = await response.json()
-      return payload.rows ?? payload ?? []
+      return normalizeRows(payload)
     } finally {
       clearTimeout(timeoutId)
     }
