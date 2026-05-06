@@ -9,6 +9,10 @@ import {
   sanitizeAuthUserRow,
 } from '../../../src/server/auth.js'
 
+export const config = {
+  runtime: 'nodejs',
+}
+
 const sendJson = (response, statusCode, payload) => {
   response.statusCode = statusCode
   response.setHeader('Content-Type', 'application/json; charset=utf-8')

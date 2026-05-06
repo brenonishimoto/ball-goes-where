@@ -2,13 +2,26 @@ import crypto from 'crypto'
 
 export const normalizeEmail = (value) => String(value || '').trim().toLowerCase()
 
-export const resolveDatabaseUrl = (env = process.env) =>
-  env.DATABASE_URL ||
-  env.NEON_DATABASE_URL ||
-  env.NEON_URL ||
-  env.POSTGRES_URL ||
-  env.POSTGRES_PRISMA_URL ||
-  ''
+const isNeonDatabaseUrl = (value) => {
+  try {
+    const hostname = new URL(String(value || '')).hostname
+    return hostname.endsWith('.neon.tech') || hostname.endsWith('.neon.dev')
+  } catch {
+    return false
+  }
+}
+
+export const resolveDatabaseUrl = (env = process.env) => {
+  const candidates = [env.DATABASE_URL, env.NEON_DATABASE_URL, env.NEON_URL]
+
+  for (const candidate of candidates) {
+    if (candidate && isNeonDatabaseUrl(candidate)) {
+      return candidate
+    }
+  }
+
+  return ''
+}
 
 export const sanitizeAuthUserRow = (row) => ({
   id: row.id,
