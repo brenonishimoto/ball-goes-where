@@ -1,7 +1,9 @@
 import crypto from 'crypto'
 import {
   createAuthToken,
+  getDatabaseHost,
   hashPassword,
+  logAuthEvent,
   normalizeEmail,
   queryNeon,
   readJsonBody,
@@ -13,6 +15,8 @@ export const config = {
   runtime: 'nodejs',
 }
 
+const makeRequestId = () => `${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`
+
 const sendJson = (response, statusCode, payload) => {
   response.statusCode = statusCode
   response.setHeader('Content-Type', 'application/json; charset=utf-8')
@@ -20,6 +24,10 @@ const sendJson = (response, statusCode, payload) => {
 }
 
 export default async function handler(request, response) {
+  const requestId = makeRequestId()
+  const startedAt = Date.now()
+  const route = 'auth.register'
+
   if (request.method === 'OPTIONS') {
     response.statusCode = 204
     response.setHeader('Access-Control-Allow-Origin', '*')
@@ -38,6 +46,9 @@ export default async function handler(request, response) {
   const authSecret = process.env.AUTH_SECRET || 'dev-auth-secret-change-this'
 
   if (!databaseUrl) {
+    logAuthEvent('error', route, requestId, 'missing database url', {
+      method: request.method,
+    })
     sendJson(response, 500, {
       error: 'URL do banco não configurada. Defina DATABASE_URL, NEON_DATABASE_URL, NEON_URL, POSTGRES_URL ou POSTGRES_PRISMA_URL no Vercel.',
     })
@@ -45,12 +56,26 @@ export default async function handler(request, response) {
   }
 
   try {
+    logAuthEvent('info', route, requestId, 'request started', {
+      method: request.method,
+      host: getDatabaseHost(databaseUrl),
+    })
+
     const body = await readJsonBody(request)
     const name = String(body.name || '').trim()
     const email = normalizeEmail(body.email)
     const password = String(body.password || '').trim()
 
+    logAuthEvent('info', route, requestId, 'payload parsed', {
+      name: name ? 'provided' : 'missing',
+      email: body.email ? 'provided' : 'missing',
+      password: password ? 'provided' : 'missing',
+    })
+
     if (name.length < 2) {
+      logAuthEvent('error', route, requestId, 'validation failed', {
+        reason: 'invalid name',
+      })
       sendJson(response, 400, { error: 'O nome precisa ter ao menos 2 caracteres.' })
       return
     }
@@ -67,6 +92,10 @@ export default async function handler(request, response) {
 
     const saltHex = crypto.randomBytes(16).toString('hex')
     const passwordHash = hashPassword(password, saltHex)
+
+    logAuthEvent('info', route, requestId, 'creating user', {
+      email,
+    })
 
     const [row] = await queryNeon(
       databaseUrl,
@@ -89,13 +118,26 @@ export default async function handler(request, response) {
       authSecret
     )
 
+    logAuthEvent('info', route, requestId, 'register success', {
+      userId: user.id,
+      email: user.email,
+      durationMs: Date.now() - startedAt,
+    })
+
     sendJson(response, 200, { token, user })
   } catch (error) {
     if (String(error?.message || '').toLowerCase().includes('duplicate key')) {
+      logAuthEvent('error', route, requestId, 'duplicate user', {
+        durationMs: Date.now() - startedAt,
+      })
       sendJson(response, 409, { error: 'Esse usuário já existe.' })
       return
     }
 
+    logAuthEvent('error', route, requestId, 'register failed', {
+      durationMs: Date.now() - startedAt,
+      error: error instanceof Error ? error.message : String(error),
+    })
     sendJson(response, 500, {
       error: error instanceof Error ? error.message : 'Erro ao registrar usuário.',
     })

@@ -4,6 +4,47 @@ export const normalizeEmail = (value) => String(value || '').trim().toLowerCase(
 
 export const normalizeEnvValue = (value) => String(value || '').trim().replace(/^['\"]|['\"]$/g, '')
 
+export const maskEmail = (value) => {
+  const email = normalizeEmail(value)
+
+  if (!email || !email.includes('@')) {
+    return 'invalid-email'
+  }
+
+  const [localPart, domain] = email.split('@')
+  const visibleLocalPart = localPart.slice(0, 2)
+
+  return `${visibleLocalPart || 'u'}***@${domain}`
+}
+
+export const getDatabaseHost = (databaseUrl) => {
+  try {
+    return new URL(normalizeEnvValue(databaseUrl)).hostname
+  } catch {
+    return 'invalid-database-url'
+  }
+}
+
+export const logAuthEvent = (level, route, requestId, message, details = {}) => {
+  const payload = {
+    route,
+    requestId,
+    message,
+    ...details,
+  }
+
+  const logLine = `[auth][${route}][${requestId}] ${message}`
+
+  if (level === 'error') {
+    // eslint-disable-next-line no-console
+    console.error(logLine, payload)
+    return
+  }
+
+  // eslint-disable-next-line no-console
+  console.info(logLine, payload)
+}
+
 export const resolveDatabaseUrl = (env = process.env) => {
   return normalizeEnvValue(env.DATABASE_URL || env.NEON_DATABASE_URL || env.NEON_URL || '')
 }
@@ -98,7 +139,7 @@ export const queryNeon = async (databaseUrl, query, params = []) => {
       clearTimeout(timeoutId)
     }
   } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
+    if (error && typeof error === 'object' && 'name' in error && error.name === 'AbortError') {
       throw new Error(`Timeout ao consultar Neon no host ${new URL(cleanDatabaseUrl).hostname}.`)
     }
 
