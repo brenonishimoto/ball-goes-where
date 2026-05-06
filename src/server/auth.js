@@ -2,6 +2,14 @@ import crypto from 'crypto'
 
 export const normalizeEmail = (value) => String(value || '').trim().toLowerCase()
 
+export const resolveDatabaseUrl = (env = process.env) =>
+  env.DATABASE_URL ||
+  env.NEON_DATABASE_URL ||
+  env.NEON_URL ||
+  env.POSTGRES_URL ||
+  env.POSTGRES_PRISMA_URL ||
+  ''
+
 export const sanitizeAuthUserRow = (row) => ({
   id: row.id,
   name: row.name,

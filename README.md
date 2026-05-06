@@ -19,6 +19,7 @@ AUTH_SECRET=troque-por-um-segredo-forte
 ```
 
 No Vercel, configure as mesmas variaveis em Project Settings > Environment Variables.
+Se o Vercel expuser a conexao do banco com outro nome, o backend tambem aceita `NEON_DATABASE_URL`, `NEON_URL`, `POSTGRES_URL` e `POSTGRES_PRISMA_URL`.
 
 ### Estrutura SQL
 

@@ -3,6 +3,7 @@ import {
   normalizeEmail,
   queryNeon,
   readJsonBody,
+  resolveDatabaseUrl,
   sanitizeAuthUserRow,
   verifyPassword,
 } from '../../../src/server/auth.js'
@@ -28,11 +29,13 @@ export default async function handler(request, response) {
     return
   }
 
-  const databaseUrl = process.env.DATABASE_URL
+  const databaseUrl = resolveDatabaseUrl()
   const authSecret = process.env.AUTH_SECRET || 'dev-auth-secret-change-this'
 
   if (!databaseUrl) {
-    sendJson(response, 500, { error: 'DATABASE_URL não configurado.' })
+    sendJson(response, 500, {
+      error: 'URL do banco não configurada. Defina DATABASE_URL, NEON_DATABASE_URL, NEON_URL, POSTGRES_URL ou POSTGRES_PRISMA_URL no Vercel.',
+    })
     return
   }
 
