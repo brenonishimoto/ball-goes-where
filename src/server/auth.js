@@ -68,27 +68,38 @@ export const queryNeon = async (databaseUrl, query, params = []) => {
   try {
     const parsedUrl = new URL(cleanDatabaseUrl)
     const apiHost = parsedUrl.hostname.replace(/^[^.]+\./, 'api.')
+    const abortController = new AbortController()
+    const timeoutId = setTimeout(() => abortController.abort(), 10000)
 
-    const response = await fetch(`https://${apiHost}/sql`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        'Neon-Connection-String': cleanDatabaseUrl,
-        'Neon-Raw-Text-Output': 'true',
-        'Neon-Array-Mode': 'true',
-      },
-      body: JSON.stringify({ query, params }),
-    })
+    try {
+      const response = await fetch(`https://${apiHost}/sql`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'Neon-Connection-String': cleanDatabaseUrl,
+          'Neon-Raw-Text-Output': 'true',
+          'Neon-Array-Mode': 'true',
+        },
+        body: JSON.stringify({ query, params }),
+        signal: abortController.signal,
+      })
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`Neon HTTP error (${response.status}) for host ${apiHost}: ${errorText}`)
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Neon HTTP error (${response.status}) for host ${apiHost}: ${errorText}`)
+      }
+
+      const payload = await response.json()
+      return payload.rows ?? payload ?? []
+    } finally {
+      clearTimeout(timeoutId)
+    }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new Error(`Timeout ao consultar Neon no host ${new URL(cleanDatabaseUrl).hostname}.`)
     }
 
-    const payload = await response.json()
-    return payload.rows ?? payload ?? []
-  } catch (error) {
     throw new Error(
       error instanceof Error ? `Falha ao consultar o Neon: ${error.message}` : 'Falha ao consultar o Neon.'
     )

@@ -42,8 +42,15 @@ Em producao no Vercel, esses caminhos sao atendidos pelas funcoes em `api/auth/`
 ### Rodando o projeto
 
 ```bash
-npm install
-npm run dev
+yarn install
+yarn dev
+```
+
+### Outros comandos
+
+```bash
+yarn build
+yarn lint
 ```
 
 ## Expanding the ESLint configuration
