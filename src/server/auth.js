@@ -2,8 +2,10 @@ import crypto from 'crypto'
 
 export const normalizeEmail = (value) => String(value || '').trim().toLowerCase()
 
+export const normalizeEnvValue = (value) => String(value || '').trim().replace(/^['\"]|['\"]$/g, '')
+
 export const resolveDatabaseUrl = (env = process.env) => {
-  return env.DATABASE_URL || env.NEON_DATABASE_URL || env.NEON_URL || ''
+  return normalizeEnvValue(env.DATABASE_URL || env.NEON_DATABASE_URL || env.NEON_URL || '')
 }
 
 export const sanitizeAuthUserRow = (row) => ({
@@ -36,7 +38,7 @@ export const verifyPassword = (password, storedPassword) => {
 
 export const createAuthToken = (payload, secret) => {
   const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url')
-  const signature = crypto.createHmac('sha256', secret).update(encodedPayload).digest('base64url')
+  const signature = crypto.createHmac('sha256', normalizeEnvValue(secret)).update(encodedPayload).digest('base64url')
   return `${encodedPayload}.${signature}`
 }
 
@@ -46,7 +48,7 @@ export const verifyAuthToken = (token, secret) => {
   }
 
   const [encodedPayload, signature] = token.split('.')
-  const expectedSignature = crypto.createHmac('sha256', secret).update(encodedPayload).digest('base64url')
+  const expectedSignature = crypto.createHmac('sha256', normalizeEnvValue(secret)).update(encodedPayload).digest('base64url')
 
   if (signature !== expectedSignature) {
     return null
@@ -63,7 +65,7 @@ export const verifyAuthToken = (token, secret) => {
 }
 
 export const queryNeon = async (databaseUrl, query, params = []) => {
-  const cleanDatabaseUrl = String(databaseUrl || '').replace(/^['\"]|['\"]$/g, '')
+  const cleanDatabaseUrl = normalizeEnvValue(databaseUrl)
 
   try {
     const parsedUrl = new URL(cleanDatabaseUrl)
