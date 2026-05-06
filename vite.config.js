@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react-swc'
 import fs from 'fs'
 import path from 'path'
+import crypto from 'crypto'
 
 const readJsonBody = async (request) => {
   const chunks = []
@@ -24,6 +25,143 @@ const buildNeonSqlEndpoint = (databaseUrl) => {
   return `https://api.${regionHost}/sql`
 }
 
+const splitSqlStatements = (sql) => {
+  const statements = []
+  let currentStatement = ''
+  let inSingleQuote = false
+  let inDoubleQuote = false
+  let dollarQuoteTag = null
+
+  for (let index = 0; index < sql.length; index += 1) {
+    const currentCharacter = sql[index]
+
+    if (dollarQuoteTag) {
+      if (sql.slice(index, index + dollarQuoteTag.length) === dollarQuoteTag) {
+        currentStatement += dollarQuoteTag
+        index += dollarQuoteTag.length - 1
+        dollarQuoteTag = null
+      } else {
+        currentStatement += currentCharacter
+      }
+
+      continue
+    }
+
+    if (!inSingleQuote && !inDoubleQuote && currentCharacter === '$') {
+      const remainingSql = sql.slice(index)
+      const tagMatch = remainingSql.match(/^\$[A-Za-z0-9_]*\$/)
+
+      if (tagMatch) {
+        dollarQuoteTag = tagMatch[0]
+        currentStatement += dollarQuoteTag
+        index += dollarQuoteTag.length - 1
+        continue
+      }
+    }
+
+    if (!inDoubleQuote && currentCharacter === "'" && sql[index - 1] !== '\\') {
+      inSingleQuote = !inSingleQuote
+      currentStatement += currentCharacter
+      continue
+    }
+
+    if (!inSingleQuote && currentCharacter === '"' && sql[index - 1] !== '\\') {
+      inDoubleQuote = !inDoubleQuote
+      currentStatement += currentCharacter
+      continue
+    }
+
+    if (!inSingleQuote && !inDoubleQuote && currentCharacter === ';') {
+      const trimmedStatement = currentStatement.trim()
+
+      if (trimmedStatement) {
+        statements.push(trimmedStatement)
+      }
+
+      currentStatement = ''
+      continue
+    }
+
+    currentStatement += currentCharacter
+  }
+
+  const trimmedStatement = currentStatement.trim()
+
+  if (trimmedStatement) {
+    statements.push(trimmedStatement)
+  }
+
+  return statements
+}
+
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase()
+
+const sanitizeAuthUserRow = (row) => ({
+  id: row.id,
+  name: row.name,
+  email: row.email,
+  createdAt: row.createdAt ?? row.created_at,
+  updatedAt: row.updatedAt ?? row.updated_at,
+})
+
+const hashPassword = (password, saltHex) => {
+  const salt = Buffer.from(saltHex, 'hex')
+  const derivedKey = crypto.scryptSync(password, salt, 64).toString('hex')
+  return `scrypt$${saltHex}$${derivedKey}`
+}
+
+const verifyPassword = (password, storedPassword) => {
+  if (!storedPassword) {
+    return false
+  }
+
+  const [scheme, saltHex, hashHex] = String(storedPassword).split('$')
+
+  if (scheme !== 'scrypt' || !saltHex || !hashHex) {
+    return false
+  }
+
+  return hashPassword(password, saltHex) === storedPassword
+}
+
+const createAuthToken = (payload, secret) => {
+  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url')
+  const signature = crypto.createHmac('sha256', secret).update(encodedPayload).digest('base64url')
+  return `${encodedPayload}.${signature}`
+}
+
+const verifyAuthToken = (token, secret) => {
+  if (!token || !token.includes('.')) {
+    return null
+  }
+
+  const [encodedPayload, signature] = token.split('.')
+  const expectedSignature = crypto.createHmac('sha256', secret).update(encodedPayload).digest('base64url')
+
+  if (signature !== expectedSignature) {
+    return null
+  }
+
+  const payload = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString('utf8'))
+  const nowInSeconds = Math.floor(Date.now() / 1000)
+
+  if (payload.exp && payload.exp < nowInSeconds) {
+    return null
+  }
+
+  return payload
+}
+
+const getBearerToken = (request) => {
+  const rawHeader = request.headers.authorization || ''
+
+  if (!rawHeader.toLowerCase().startsWith('bearer ')) {
+    return null
+  }
+
+  return rawHeader.slice(7).trim()
+}
+
 const queryNeon = async (databaseUrl, query, params = []) => {
   const cleanDatabaseUrl = String(databaseUrl || '').replace(/^['\"]|['\"]$/g, '')
 
@@ -34,7 +172,6 @@ const queryNeon = async (databaseUrl, query, params = []) => {
       Accept: 'application/json',
       'Neon-Connection-String': cleanDatabaseUrl,
       'Neon-Raw-Text-Output': 'true',
-      'Neon-Array-Mode': 'true',
     },
     body: JSON.stringify({ query, params }),
   })
@@ -58,10 +195,7 @@ const neonApiPlugin = (env) => ({
         const sqlPath = path.resolve(process.cwd(), 'sql', 'neon-users.sql')
         if (fs.existsSync(sqlPath)) {
           const sql = fs.readFileSync(sqlPath, 'utf8')
-          const statements = sql
-            .split(';')
-            .map((s) => s.trim())
-            .filter(Boolean)
+          const statements = splitSqlStatements(sql)
 
           for (const stmt of statements) {
             try {
@@ -105,7 +239,7 @@ const neonApiPlugin = (env) => ({
           }
 
           const sql = fs.readFileSync(sqlPath, 'utf8')
-          const statements = sql.split(';').map((s) => s.trim()).filter(Boolean)
+          const statements = splitSqlStatements(sql)
           const results = []
 
           for (const stmt of statements) {
@@ -125,7 +259,7 @@ const neonApiPlugin = (env) => ({
         return
       }
 
-      if (requestUrl.pathname === '/api/users/sync' || requestUrl.pathname.startsWith('/api/users/')) {
+      if (requestUrl.pathname.startsWith('/api/auth')) {
         const sendJson = (statusCode, payload) => {
           response.statusCode = statusCode
           response.setHeader('Content-Type', 'application/json; charset=utf-8')
@@ -135,7 +269,7 @@ const neonApiPlugin = (env) => ({
         if (request.method === 'OPTIONS') {
           response.statusCode = 204
           response.setHeader('Access-Control-Allow-Origin', '*')
-          response.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+          response.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization')
           response.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
           response.end()
           return
@@ -148,85 +282,152 @@ const neonApiPlugin = (env) => ({
           return
         }
 
-        try {
-          if (request.method === 'POST' && requestUrl.pathname === '/api/users/sync') {
-            const body = await readJsonBody(request)
-            const clerkId = body.clerkId?.trim()
+        const authSecret = env.AUTH_SECRET || process.env.AUTH_SECRET || 'dev-auth-secret-change-this'
 
-            if (!clerkId) {
-              sendJson(400, { error: 'clerkId é obrigatório.' })
+        try {
+          if (request.method === 'POST' && requestUrl.pathname === '/api/auth/register') {
+            const body = await readJsonBody(request)
+            const name = String(body.name || '').trim()
+            const email = normalizeEmail(body.email)
+            const password = String(body.password || '').trim()
+
+            if (name.length < 2) {
+              sendJson(400, { error: 'O nome precisa ter ao menos 2 caracteres.' })
               return
             }
 
-            const email = body.email?.trim() || null
-            const name = body.name?.trim() || null
-            const avatarUrl = body.avatarUrl?.trim() || null
+            if (!email) {
+              sendJson(400, { error: 'O email é obrigatório.' })
+              return
+            }
+
+            if (password.length < 6) {
+              sendJson(400, { error: 'A senha precisa ter ao menos 6 caracteres.' })
+              return
+            }
+
+            const saltHex = crypto.randomBytes(16).toString('hex')
+            const passwordHash = hashPassword(password, saltHex)
 
             const [row] = await queryNeon(
               databaseUrl,
               `
-              INSERT INTO users (clerk_id, email, name, avatar_url, updated_at)
-              VALUES ($1, $2, $3, $4, now())
-              ON CONFLICT (clerk_id)
-              DO UPDATE SET
-                email = EXCLUDED.email,
-                name = EXCLUDED.name,
-                avatar_url = EXCLUDED.avatar_url,
-                updated_at = now()
-              RETURNING id, clerk_id, email, name, avatar_url, created_at, updated_at
+              INSERT INTO neon_auth."user" (name, email, "emailVerified", password)
+              VALUES ($1, $2, $3, $4)
+              RETURNING id, name, email, "createdAt", "updatedAt"
             `,
-              [clerkId, email, name, avatarUrl]
+              [name, email, false, passwordHash]
+            )
+
+            const user = sanitizeAuthUserRow(row)
+            const token = createAuthToken(
+              {
+                sub: user.id,
+                name: user.name,
+                email: user.email,
+                exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
+              },
+              authSecret
             )
 
             sendJson(200, {
-              id: row.id,
-              clerkId: row.clerk_id,
-              email: row.email,
-              name: row.name,
-              avatarUrl: row.avatar_url,
-              createdAt: row.created_at,
-              updatedAt: row.updated_at,
+              token,
+              user,
             })
             return
           }
 
-          if (request.method === 'GET' && requestUrl.pathname.startsWith('/api/users/')) {
-            const clerkId = decodeURIComponent(requestUrl.pathname.replace('/api/users/', ''))
+          if (request.method === 'POST' && requestUrl.pathname === '/api/auth/login') {
+            const body = await readJsonBody(request)
+            const email = normalizeEmail(body.email)
+            const password = String(body.password || '').trim()
+
+            if (!email || !password) {
+              sendJson(400, { error: 'Email e senha são obrigatórios.' })
+              return
+            }
 
             const rows = await queryNeon(
               databaseUrl,
               `
-              SELECT id, clerk_id, email, name, avatar_url, created_at, updated_at
-              FROM users
-              WHERE clerk_id = $1
+              SELECT id, name, email, password, "createdAt", "updatedAt"
+              FROM neon_auth."user"
+              WHERE email = $1
               LIMIT 1
             `,
-              [clerkId]
+              [email]
             )
 
             if (!rows.length) {
-              sendJson(404, { error: 'Usuário não encontrado.' })
+              sendJson(401, { error: 'Usuário ou senha inválidos.' })
               return
             }
 
             const row = rows[0]
+            const computedHash = verifyPassword(password, row.password)
+
+            if (!computedHash) {
+              sendJson(401, { error: 'Usuário ou senha inválidos.' })
+              return
+            }
+
+            const user = sanitizeAuthUserRow(row)
+            const token = createAuthToken(
+              {
+                sub: user.id,
+                name: user.name,
+                email: user.email,
+                exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
+              },
+              authSecret
+            )
+
             sendJson(200, {
-              id: row.id,
-              clerkId: row.clerk_id,
-              email: row.email,
-              name: row.name,
-              avatarUrl: row.avatar_url,
-              createdAt: row.created_at,
-              updatedAt: row.updated_at,
+              token,
+              user,
             })
+            return
+          }
+
+          if (request.method === 'GET' && requestUrl.pathname === '/api/auth/me') {
+            const bearerToken = getBearerToken(request)
+            const payload = verifyAuthToken(bearerToken, authSecret)
+
+            if (!payload?.sub) {
+              sendJson(401, { error: 'Sessão inválida ou expirada.' })
+              return
+            }
+
+            const rows = await queryNeon(
+              databaseUrl,
+              `
+              SELECT id, name, email, "createdAt", "updatedAt"
+              FROM neon_auth."user"
+              WHERE id = $1
+              LIMIT 1
+            `,
+              [payload.sub]
+            )
+
+            if (!rows.length) {
+              sendJson(401, { error: 'Usuário não encontrado.' })
+              return
+            }
+
+            sendJson(200, { user: sanitizeAuthUserRow(rows[0]) })
             return
           }
 
           sendJson(404, { error: 'Rota não encontrada.' })
           return
         } catch (error) {
+          if (String(error?.message || '').toLowerCase().includes('duplicate key')) {
+            sendJson(409, { error: 'Esse usuário já existe.' })
+            return
+          }
+
           sendJson(500, {
-            error: error instanceof Error ? error.message : 'Erro ao acessar o Neon.',
+            error: error instanceof Error ? error.message : 'Erro ao acessar o Neon Auth.',
           })
           return
         }

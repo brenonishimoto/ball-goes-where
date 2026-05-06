@@ -1,30 +1,37 @@
 create extension if not exists pgcrypto;
 
-create table if not exists public.users (
+create schema if not exists neon_auth;
+
+create table if not exists neon_auth."user" (
   id uuid primary key default gen_random_uuid(),
-  clerk_id text not null unique,
-  email text,
-  name text,
-  avatar_url text,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  name text not null,
+  email text unique not null,
+  emailVerified boolean not null default false,
+  image text,
+  createdAt timestamptz not null default current_timestamp,
+  updatedAt timestamptz not null default current_timestamp,
+  role text,
+  banned boolean,
+  banReason text,
+  banExpires timestamptz,
+  password text
 );
 
-create index if not exists users_clerk_id_idx on public.users (clerk_id);
+create index if not exists neon_auth_user_email_idx on neon_auth."user" (email);
 
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
 as $$
 begin
-  new.updated_at = now();
+  new."updatedAt" = now();
   return new;
 end;
 $$;
 
-drop trigger if exists users_set_updated_at on public.users;
+drop trigger if exists neon_auth_user_set_updated_at on neon_auth."user";
 
-create trigger users_set_updated_at
-before update on public.users
+create trigger neon_auth_user_set_updated_at
+before update on neon_auth."user"
 for each row
 execute function public.set_updated_at();

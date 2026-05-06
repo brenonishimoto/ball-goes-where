@@ -61,6 +61,137 @@
   }
 }
 
+.auth-round-btn {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 999px;
+  border: 1px solid #60a5fa;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+
+  &:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+  }
+}
+
+.auth-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 1rem;
+}
+
+.auth-modal {
+  width: min(420px, 100%);
+  background: #ffffff;
+  border-radius: 1rem;
+  padding: 1.2rem;
+  position: relative;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.35);
+}
+
+.auth-modal-close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  border: 0;
+  background: transparent;
+  font-size: 1rem;
+  color: #475569;
+  cursor: pointer;
+}
+
+.auth-modal-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.auth-modal-tab {
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 600;
+  cursor: pointer;
+
+  &.is-active {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+    color: #ffffff;
+  }
+}
+
+.auth-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  input {
+    border: 1px solid #cbd5e1;
+    border-radius: 0.65rem;
+    height: 2.4rem;
+    padding: 0 0.75rem;
+    font-size: 0.92rem;
+
+    &:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+  }
+}
+
+.auth-modal-primary {
+  border: 0;
+  border-radius: 0.65rem;
+  height: 2.45rem;
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.auth-modal-error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 0.84rem;
+}
+
+.auth-modal-user {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+
+  h3 {
+    margin: 0;
+    color: #0f172a;
+  }
+
+  p {
+    margin: 0;
+    color: #334155;
+  }
+}
+
 @media (max-width: 768px) {
   .header-container {
     flex-direction: column;
@@ -78,6 +209,7 @@
     gap: 1rem;
     width: 100%;
     justify-content: center;
+    flex-wrap: wrap;
 
     .nav-link {
       font-size: 0.85rem;

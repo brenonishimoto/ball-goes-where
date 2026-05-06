@@ -3,26 +3,43 @@
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
  - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## Clerk + Neon
+## Neon Auth (usuario e senha)
 
-O app usa Clerk para login e, após o usuário entrar, sincroniza/consulta os dados dele em uma tabela `users` no Neon via uma API local embutida no Vite.
+O projeto usa uma API local no Vite para login/cadastro com persistencia na tabela `neon_auth."user"`.
 
-Crie a tabela com o arquivo `sql/neon-users.sql` e configure estas variáveis de ambiente:
+### Variaveis de ambiente
+
+Defina no arquivo `.env`:
 
 ```bash
-VITE_CLERK_PUBLISHABLE_KEY=...
-DATABASE_URL=postgresql://user:password@host/neon_db
+DATABASE_URL=postgresql://user:password@host/database?sslmode=require
+AUTH_SECRET=troque-por-um-segredo-forte
 ```
 
-Depois rode apenas o Vite:
+### Estrutura SQL
+
+O arquivo `sql/neon-users.sql` cria automaticamente:
+
+- schema `neon_auth`
+- tabela `neon_auth."user"`
+- colunas `username`, `password_hash`, `password_salt`
+
+As migrations sao aplicadas automaticamente ao subir `vite` em modo dev.
+
+### Endpoints locais
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/auth/me`
+
+### Rodando o projeto
 
 ```bash
+npm install
 npm run dev
 ```
-
-Quando o login do Clerk estiver bem sucedido, o componente de perfil chama a API local do Vite, que faz upsert do usuário no Neon e devolve o registro salvo.
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
 ## Expanding the ESLint configuration
 
