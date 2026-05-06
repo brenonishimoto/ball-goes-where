@@ -18,6 +18,8 @@ DATABASE_URL=postgresql://user:password@host/database?sslmode=require
 AUTH_SECRET=troque-por-um-segredo-forte
 ```
 
+No Vercel, configure as mesmas variaveis em Project Settings > Environment Variables.
+
 ### Estrutura SQL
 
 O arquivo `sql/neon-users.sql` cria automaticamente:
@@ -33,6 +35,8 @@ As migrations sao aplicadas automaticamente ao subir `vite` em modo dev.
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `GET /api/auth/me`
+
+Em producao no Vercel, esses caminhos sao atendidos pelas funcoes em `api/auth/`.
 
 ### Rodando o projeto
 

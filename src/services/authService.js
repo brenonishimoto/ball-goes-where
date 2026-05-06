@@ -1,10 +1,40 @@
 const API_BASE_URL = '/api/auth';
 
+const extractErrorMessage = (value, fallback = 'Falha na autenticação.') => {
+  if (!value) {
+    return fallback;
+  }
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (value instanceof Error) {
+    return value.message || fallback;
+  }
+
+  if (typeof value === 'object') {
+    return extractErrorMessage(value.message || value.error || value.detail || value.reason, fallback);
+  }
+
+  return fallback;
+};
+
 const parseResponse = async (response) => {
-  const data = await response.json().catch(() => ({}));
+  const rawText = await response.text();
+  let data = {};
+
+  if (rawText) {
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      data = {};
+    }
+  }
 
   if (!response.ok) {
-    throw new Error(data?.error || 'Falha na autenticação.');
+    const message = extractErrorMessage(data?.error, `Erro ${response.status}: ${response.statusText || 'requisição inválida'}`);
+    throw new Error(message);
   }
 
   return data;
