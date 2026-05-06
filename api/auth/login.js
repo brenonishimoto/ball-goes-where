@@ -102,10 +102,19 @@ export default async function handler(request, response) {
 
     const row = rows[0]
 
+    logAuthEvent('info', route, requestId, 'password verification attempt', {
+      email,
+      userId: row.id,
+      storedPasswordExists: !!row.password,
+      storedPasswordLength: String(row.password || '').length,
+      storedPasswordPrefix: String(row.password || '').substring(0, 20),
+    })
+
     if (!verifyPassword(password, row.password)) {
       logAuthEvent('error', route, requestId, 'password verification failed', {
         email,
         userId: row.id,
+        providedPasswordLength: password.length,
       })
       sendJson(response, 401, { error: 'Usuário ou senha inválidos.' })
       return
