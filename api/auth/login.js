@@ -8,7 +8,7 @@ import {
   resolveDatabaseUrl,
   sanitizeAuthUserRow,
   verifyPassword,
-} from '../../../src/server/auth.js'
+} from '../../src/server/auth.js'
 
 export const config = {
   runtime: 'nodejs',
