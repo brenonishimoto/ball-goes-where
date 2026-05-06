@@ -102,7 +102,7 @@ export default async function handler(request, response) {
       `
       INSERT INTO neon_auth."user" (name, email, "emailVerified", password)
       VALUES ($1, $2, $3, $4)
-      RETURNING id, name, email, "createdAt", "updatedAt"
+      RETURNING id, name, email
     `,
       [name, email, false, passwordHash]
     )

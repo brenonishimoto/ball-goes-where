@@ -85,7 +85,7 @@ export default async function handler(request, response) {
     const rows = await queryNeon(
       databaseUrl,
       `
-      SELECT id, name, email, "createdAt", "updatedAt"
+      SELECT id, name, email
       FROM neon_auth."user"
       WHERE id = $1
       LIMIT 1

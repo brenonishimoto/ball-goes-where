@@ -84,7 +84,7 @@ export default async function handler(request, response) {
     const rows = await queryNeon(
       databaseUrl,
       `
-      SELECT id, name, email, password, "createdAt", "updatedAt"
+      SELECT id, name, email, password
       FROM neon_auth."user"
       WHERE email = $1
       LIMIT 1
@@ -92,7 +92,13 @@ export default async function handler(request, response) {
       [email]
     )
 
-    if (!rows.length) {
+    logAuthEvent('info', route, requestId, 'neon query completed', {
+      email,
+      rowsCount: rows ? rows.length : 0,
+      rowsType: rows ? Array.isArray(rows) ? 'array' : typeof rows : 'null',
+    })
+
+    if (!rows || !rows.length) {
       logAuthEvent('error', route, requestId, 'user not found', {
         email,
       })
@@ -102,18 +108,11 @@ export default async function handler(request, response) {
 
     const row = rows[0]
 
-    logAuthEvent('info', route, requestId, 'query result', {
+    logAuthEvent('info', route, requestId, 'user row retrieved', {
       email,
-      rowKeys: Object.keys(row),
-      rowValues: JSON.stringify(row),
-    })
-
-    logAuthEvent('info', route, requestId, 'password verification attempt', {
-      email,
-      userId: row.id,
-      storedPasswordExists: !!row.password,
-      storedPasswordLength: String(row.password || '').length,
-      storedPasswordPrefix: String(row.password || '').substring(0, 20),
+      rowType: typeof row,
+      rowKeys: row ? Object.keys(row) : [],
+      row: JSON.stringify(row),
     })
 
     if (!verifyPassword(password, row.password)) {
