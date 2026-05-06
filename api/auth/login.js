@@ -102,6 +102,12 @@ export default async function handler(request, response) {
 
     const row = rows[0]
 
+    logAuthEvent('info', route, requestId, 'query result', {
+      email,
+      rowKeys: Object.keys(row),
+      rowValues: JSON.stringify(row),
+    })
+
     logAuthEvent('info', route, requestId, 'password verification attempt', {
       email,
       userId: row.id,
