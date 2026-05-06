@@ -1,5 +1,4 @@
 import crypto from 'crypto'
-import { neon } from '@neondatabase/serverless'
 
 export const normalizeEmail = (value) => String(value || '').trim().toLowerCase()
 
@@ -61,9 +60,29 @@ export const verifyAuthToken = (token, secret) => {
 
 export const queryNeon = async (databaseUrl, query, params = []) => {
   const cleanDatabaseUrl = String(databaseUrl || '').replace(/^['\"]|['\"]$/g, '')
-  const sql = neon(cleanDatabaseUrl)
-  const rows = await sql.query(query, params)
-  return rows ?? []
+
+  const parsedUrl = new URL(cleanDatabaseUrl)
+  const apiHost = parsedUrl.hostname.replace(/^[^.]+\./, 'api.')
+
+  const response = await fetch(`https://${apiHost}/sql`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'Neon-Connection-String': cleanDatabaseUrl,
+      'Neon-Raw-Text-Output': 'true',
+      'Neon-Array-Mode': 'true',
+    },
+    body: JSON.stringify({ query, params }),
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`Neon HTTP error (${response.status}): ${errorText}`)
+  }
+
+  const payload = await response.json()
+  return payload.rows ?? payload ?? []
 }
 
 export const readJsonBody = async (request) => {
