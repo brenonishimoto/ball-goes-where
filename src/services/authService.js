@@ -33,7 +33,10 @@ const parseResponse = async (response) => {
   }
 
   if (!response.ok) {
-    const message = extractErrorMessage(data?.error, `Erro ${response.status}: ${response.statusText || 'requisição inválida'}`);
+    const message = extractErrorMessage(
+      data?.error || rawText,
+      `Erro ${response.status}: ${response.statusText || 'requisição inválida'}`
+    );
     throw new Error(message);
   }
 

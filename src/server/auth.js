@@ -82,28 +82,34 @@ export const verifyAuthToken = (token, secret) => {
 export const queryNeon = async (databaseUrl, query, params = []) => {
   const cleanDatabaseUrl = String(databaseUrl || '').replace(/^['\"]|['\"]$/g, '')
 
-  const parsedUrl = new URL(cleanDatabaseUrl)
-  const apiHost = parsedUrl.hostname.replace(/^[^.]+\./, 'api.')
+  try {
+    const parsedUrl = new URL(cleanDatabaseUrl)
+    const apiHost = parsedUrl.hostname.replace(/^[^.]+\./, 'api.')
 
-  const response = await fetch(`https://${apiHost}/sql`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      'Neon-Connection-String': cleanDatabaseUrl,
-      'Neon-Raw-Text-Output': 'true',
-      'Neon-Array-Mode': 'true',
-    },
-    body: JSON.stringify({ query, params }),
-  })
+    const response = await fetch(`https://${apiHost}/sql`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'Neon-Connection-String': cleanDatabaseUrl,
+        'Neon-Raw-Text-Output': 'true',
+        'Neon-Array-Mode': 'true',
+      },
+      body: JSON.stringify({ query, params }),
+    })
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`Neon HTTP error (${response.status}): ${errorText}`)
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Neon HTTP error (${response.status}) for host ${apiHost}: ${errorText}`)
+    }
+
+    const payload = await response.json()
+    return payload.rows ?? payload ?? []
+  } catch (error) {
+    throw new Error(
+      error instanceof Error ? `Falha ao consultar o Neon: ${error.message}` : 'Falha ao consultar o Neon.'
+    )
   }
-
-  const payload = await response.json()
-  return payload.rows ?? payload ?? []
 }
 
 export const readJsonBody = async (request) => {
@@ -117,5 +123,15 @@ export const readJsonBody = async (request) => {
     return {}
   }
 
-  return JSON.parse(Buffer.concat(chunks).toString('utf8'))
+  const rawBody = Buffer.concat(chunks).toString('utf8')
+
+  try {
+    return JSON.parse(rawBody)
+  } catch (error) {
+    throw new Error(
+      error instanceof Error
+        ? `Corpo JSON invalido: ${error.message}`
+        : 'Corpo JSON invalido.'
+    )
+  }
 }
