@@ -30,6 +30,17 @@ create table if not exists public.user_predictions (
 
 create index if not exists user_predictions_updated_at_idx on public.user_predictions (updated_at desc);
 
+create table if not exists public.user_scores (
+  user_id uuid primary key references neon_auth."user"(id) on delete cascade,
+  total_score integer not null default 0,
+  phase02_score integer not null default 0,
+  calculated_at timestamptz not null default current_timestamp,
+  updated_at timestamptz not null default current_timestamp
+);
+
+create index if not exists user_scores_total_idx on public.user_scores (total_score desc);
+create index if not exists user_scores_updated_at_idx on public.user_scores (updated_at desc);
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql

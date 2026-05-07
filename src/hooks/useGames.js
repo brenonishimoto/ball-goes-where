@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { gameService } from '../services/gameService';
 import { predictionService } from '../services/predictionService';
+import { scoringService } from '../services/scoringService';
+import { rankingService } from '../services/rankingService';
 
 export const useGames = () => {
   const [games, setGames] = useState([]);
@@ -22,6 +24,8 @@ export const useGames = () => {
       setLoading(true);
 
       try {
+        const allGames = gameService.getAllGames(storageKey);
+
         if (token) {
           const remoteGames = await predictionService.getMyPredictions({ token });
 
@@ -30,15 +34,20 @@ export const useGames = () => {
           }
 
           if (remoteGames.length > 0) {
-            const savedGames = gameService.saveGames(remoteGames, storageKey);
-            setGames(savedGames);
+            // Mesclar palpites remotos com dados base dos jogos (mantendo officialM/V, data, hora, etc)
+            const mergedGames = allGames.map(baseGame => {
+              const remoteGame = remoteGames.find(rg => rg.id === baseGame.id);
+              return remoteGame 
+                ? { ...baseGame, placarM: remoteGame.placarM, placarV: remoteGame.placarV }
+                : baseGame;
+            });
+            setGames(mergedGames);
             return;
           }
         }
 
-        const loadedGames = gameService.getAllGames(storageKey);
         if (isActive) {
-          setGames(loadedGames);
+          setGames(allGames);
         }
       } catch {
         const loadedGames = gameService.getAllGames(storageKey);
@@ -96,6 +105,14 @@ export const useGames = () => {
 
     try {
       const remoteGames = await predictionService.saveMyPredictions({ token, games: savedGames });
+
+      // Calcular e enviar score
+      try {
+        const scorePayload = scoringService.calculateScorePayload(remoteGames);
+        await rankingService.updateMyScore({ token, score: scorePayload });
+      } catch {
+        // Score falha não bloqueia salvamento de palpites
+      }
 
       return {
         status: 'saved',

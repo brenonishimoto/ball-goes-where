@@ -24,8 +24,8 @@ export const ROUNDS = [
 ];
 
 const buildInitialGames = () => ([
-  { id: 1, mandante: 'México', visitante: 'África do Sul', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo A', rodada: 1, data: 'Qui, 11/06/2026', hora: '16h00' },
-  { id: 2, mandante: 'Coreia do Sul', visitante: 'República Tcheca', placarM: null, placarV: null, fase: 'Grupo A', rodada: 1, data: 'Qui, 11/06/2026', hora: '23h00' },
+  { id: 1, mandante: 'México', visitante: 'África do Sul', placarM: null, placarV: null, officialM: 3, officialV: 2, fase: 'Grupo A', rodada: 1, data: 'Qui, 11/06/2026', hora: '16h00' },
+  { id: 2, mandante: 'Coreia do Sul', visitante: 'República Tcheca', placarM: null, placarV: null, officialM: 1, officialV: 1, fase: 'Grupo A', rodada: 1, data: 'Qui, 11/06/2026', hora: '23h00' },
   { id: 3, mandante: 'Canadá', visitante: 'Bósnia e Herzegovina', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo B', rodada: 1, data: 'Sex, 12/06/2026', hora: '16h00' },
   { id: 4, mandante: 'Estados Unidos', visitante: 'Paraguai', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo D', rodada: 1, data: 'Sex, 12/06/2026', hora: '22h00' },
   { id: 5, mandante: 'Catar', visitante: 'Suíça', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo B', rodada: 1, data: 'Sáb, 13/06/2026', hora: '16h00' },
@@ -114,14 +114,20 @@ const INITIAL_GAMES = buildInitialGames().map(g => ({
   officialV: g.officialV ?? null,
 }));
 
+const cloneInitialGames = () => INITIAL_GAMES.map(game => ({ ...game }));
+
 export const gameService = {
   // Obter todos os jogos
   getGameStorageKey: (scope = 'guest') => resolveStorageKey(scope),
 
   getAllGames: (storageKey = STORAGE_KEY) => {
     const saved = localStorage.getItem(storageKey);
-    const games = saved ? JSON.parse(saved) : INITIAL_GAMES;
-    return dedupeGames(games);
+    if (!saved) {
+      return cloneInitialGames();
+    }
+
+    const games = dedupeGames(JSON.parse(saved));
+    return games.length > 0 ? games : cloneInitialGames();
   },
 
   // Obter um jogo por ID
@@ -176,7 +182,7 @@ export const gameService = {
   // Limpar todos os dados
   clearAllData: (storageKey = STORAGE_KEY) => {
     localStorage.removeItem(storageKey);
-    return INITIAL_GAMES;
+    return cloneInitialGames();
   },
 
   // Obter jogos por fase

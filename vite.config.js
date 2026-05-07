@@ -319,6 +319,21 @@ const neonApiPlugin = (env) => ({
               [name, email, false, passwordHash]
             )
 
+            // Criar entrada no ranking com score 0
+            try {
+              await queryNeon(
+                databaseUrl,
+                `
+                INSERT INTO public.user_scores (user_id, total_score, phase02_score, calculated_at, updated_at)
+                VALUES ($1, 0, 0, now(), now())
+                ON CONFLICT (user_id) DO NOTHING
+              `,
+                [row.id]
+              )
+            } catch (err) {
+              // Falha ao criar score não bloqueia o registro
+            }
+
             const user = sanitizeAuthUserRow(row)
             const token = createAuthToken(
               {
@@ -509,6 +524,140 @@ const neonApiPlugin = (env) => ({
         } catch (error) {
           sendJson(500, {
             error: error instanceof Error ? error.message : 'Erro ao consultar palpites.',
+          })
+          return
+        }
+      }
+
+      if (requestUrl.pathname === '/api/ranking/leaderboard') {
+        const sendJson = (statusCode, payload) => {
+          response.statusCode = statusCode
+          response.setHeader('Content-Type', 'application/json; charset=utf-8')
+          response.end(JSON.stringify(payload))
+        }
+
+        if (request.method === 'OPTIONS') {
+          response.statusCode = 204
+          response.setHeader('Access-Control-Allow-Origin', '*')
+          response.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+          response.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS')
+          response.end()
+          return
+        }
+
+        const databaseUrl = env.DATABASE_URL || process.env.DATABASE_URL
+
+        if (!databaseUrl) {
+          sendJson(500, { error: 'DATABASE_URL não configurado.' })
+          return
+        }
+
+        try {
+          if (request.method === 'GET') {
+            const rows = await queryNeon(
+              databaseUrl,
+              `
+              SELECT
+                u.id as user_id,
+                u.name,
+                u.email,
+                COALESCE(us.total_score, 0) as total_score,
+                COALESCE(us.updated_at, now()) as updated_at,
+                ROW_NUMBER() OVER (ORDER BY COALESCE(us.total_score, 0) DESC, COALESCE(us.updated_at, now()) DESC) as position
+              FROM neon_auth."user" u
+              LEFT JOIN public.user_scores us ON u.id = us.user_id
+              ORDER BY COALESCE(us.total_score, 0) DESC, COALESCE(us.updated_at, now()) DESC
+              LIMIT 100
+            `
+            )
+
+            const leaderboard = rows.map((row) => ({
+              position: Number(row.position) || 0,
+              userId: row.user_id,
+              name: row.name,
+              email: row.email,
+              totalScore: Number(row.total_score) || 0,
+              updatedAt: row.updated_at,
+            }))
+
+            sendJson(200, { leaderboard })
+            return
+          }
+
+          sendJson(405, { error: 'Método não permitido.' })
+          return
+        } catch (error) {
+          sendJson(500, {
+            error: error instanceof Error ? error.message : 'Erro ao buscar ranking.',
+          })
+          return
+        }
+      }
+
+      if (requestUrl.pathname === '/api/ranking/scores/me') {
+        const sendJson = (statusCode, payload) => {
+          response.statusCode = statusCode
+          response.setHeader('Content-Type', 'application/json; charset=utf-8')
+          response.end(JSON.stringify(payload))
+        }
+
+        if (request.method === 'OPTIONS') {
+          response.statusCode = 204
+          response.setHeader('Access-Control-Allow-Origin', '*')
+          response.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+          response.setHeader('Access-Control-Allow-Methods', 'GET,PUT,OPTIONS')
+          response.end()
+          return
+        }
+
+        const databaseUrl = env.DATABASE_URL || process.env.DATABASE_URL
+
+        if (!databaseUrl) {
+          sendJson(500, { error: 'DATABASE_URL não configurado.' })
+          return
+        }
+
+        const authSecret = env.AUTH_SECRET || process.env.AUTH_SECRET || 'dev-auth-secret-change-this'
+
+        try {
+          const bearerToken = getBearerToken(request)
+          const payload = verifyAuthToken(bearerToken, authSecret)
+
+          if (!payload?.sub) {
+            sendJson(401, { error: 'Sessão inválida ou expirada.' })
+            return
+          }
+
+          if (request.method === 'PUT') {
+            const body = await readJsonBody(request)
+            const totalScore = Number(body.totalScore || 0)
+            const phase02Score = Number(body.phase02 || 0)
+
+            const rows = await queryNeon(
+              databaseUrl,
+              `
+              INSERT INTO public.user_scores (user_id, total_score, phase02_score, calculated_at, updated_at)
+              VALUES ($1, $2, $3, now(), now())
+              ON CONFLICT (user_id) DO UPDATE
+              SET total_score = EXCLUDED.total_score,
+                  phase02_score = EXCLUDED.phase02_score,
+                  updated_at = now()
+              RETURNING total_score, phase02_score, calculated_at, updated_at
+            `,
+              [payload.sub, totalScore, phase02Score]
+            )
+
+            const savedScore = rows.length ? rows[0] : { total_score: totalScore, phase02_score: phase02Score }
+
+            sendJson(200, { success: true, total_score: savedScore.total_score, phase02_score: savedScore.phase02_score })
+            return
+          }
+
+          sendJson(405, { error: 'Método não permitido.' })
+          return
+        } catch (error) {
+          sendJson(500, {
+            error: error instanceof Error ? error.message : 'Erro ao atualizar score.',
           })
           return
         }

@@ -54,6 +54,13 @@ export default function GameInput({
             <span className="team-name">{game.visitante}</span>
           </div>
         </div>
+
+        {game.officialM !== null && game.officialV !== null && (
+          <div className="official-score">
+            <span className="official-label">Resultado:</span>
+            <span className="official-result">{game.officialM}-{game.officialV}</span>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useGames } from '../../hooks/useGames';
 import Card from '../../components/Card/Card';
 import GameInput from '../../components/GameInput/GameInput';
-import { GROUPS, ROUNDS } from '../../services/gameService';
+import { GROUPS, ROUNDS, gameService } from '../../services/gameService';
 import { computeGroupStandings } from '../../utils/helpers';
 import { useToast } from '../../context/ToastContext';
 import './cupTable.scss';
@@ -20,7 +20,8 @@ export default function CupTablePage({
     clearData: hookClearData,
   } = useGames();
 
-  const games = externalGames ?? hookGames;
+  const officialGames = gameService.getAllGames(gameService.getGameStorageKey('guest'));
+  const games = editable ? (externalGames ?? hookGames) : officialGames;
   const updateScore = externalUpdateScore ?? hookUpdateScore;
   const save = externalSave ?? hookSave;
   const clearData = externalClearData ?? hookClearData;
