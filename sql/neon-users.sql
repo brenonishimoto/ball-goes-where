@@ -19,6 +19,17 @@ create table if not exists neon_auth."user" (
 
 create index if not exists neon_auth_user_email_idx on neon_auth."user" (email);
 
+create schema if not exists public;
+
+create table if not exists public.user_predictions (
+  user_id uuid primary key references neon_auth."user"(id) on delete cascade,
+  games jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default current_timestamp,
+  updated_at timestamptz not null default current_timestamp
+);
+
+create index if not exists user_predictions_updated_at_idx on public.user_predictions (updated_at desc);
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql

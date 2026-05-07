@@ -433,6 +433,87 @@ const neonApiPlugin = (env) => ({
         }
       }
 
+      if (requestUrl.pathname === '/api/predictions/me') {
+        const sendJson = (statusCode, payload) => {
+          response.statusCode = statusCode
+          response.setHeader('Content-Type', 'application/json; charset=utf-8')
+          response.end(JSON.stringify(payload))
+        }
+
+        if (request.method === 'OPTIONS') {
+          response.statusCode = 204
+          response.setHeader('Access-Control-Allow-Origin', '*')
+          response.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+          response.setHeader('Access-Control-Allow-Methods', 'GET,PUT,OPTIONS')
+          response.end()
+          return
+        }
+
+        const databaseUrl = env.DATABASE_URL || process.env.DATABASE_URL
+
+        if (!databaseUrl) {
+          sendJson(500, { error: 'DATABASE_URL não configurado.' })
+          return
+        }
+
+        const authSecret = env.AUTH_SECRET || process.env.AUTH_SECRET || 'dev-auth-secret-change-this'
+
+        try {
+          const bearerToken = getBearerToken(request)
+          const payload = verifyAuthToken(bearerToken, authSecret)
+
+          if (!payload?.sub) {
+            sendJson(401, { error: 'Sessão inválida ou expirada.' })
+            return
+          }
+
+          if (request.method === 'GET') {
+            const rows = await queryNeon(
+              databaseUrl,
+              `
+              SELECT games
+              FROM public.user_predictions
+              WHERE user_id = $1
+              LIMIT 1
+            `,
+              [payload.sub]
+            )
+
+            sendJson(200, { games: rows.length ? rows[0].games ?? [] : [] })
+            return
+          }
+
+          if (request.method === 'PUT') {
+            const body = await readJsonBody(request)
+            const games = Array.isArray(body.games) ? body.games : []
+
+            const rows = await queryNeon(
+              databaseUrl,
+              `
+              INSERT INTO public.user_predictions (user_id, games, updated_at)
+              VALUES ($1, $2::jsonb, now())
+              ON CONFLICT (user_id) DO UPDATE
+              SET games = EXCLUDED.games,
+                  updated_at = now()
+              RETURNING games
+            `,
+              [payload.sub, JSON.stringify(games)]
+            )
+
+            sendJson(200, { games: rows.length ? rows[0].games ?? games : games })
+            return
+          }
+
+          sendJson(405, { error: 'Método não permitido.' })
+          return
+        } catch (error) {
+          sendJson(500, {
+            error: error instanceof Error ? error.message : 'Erro ao consultar palpites.',
+          })
+          return
+        }
+      }
+
       next()
     })
   },

@@ -1,5 +1,7 @@
 const STORAGE_KEY = 'bolao-copa-2026-v2';
 
+const resolveStorageKey = (scope = 'guest') => `${STORAGE_KEY}:${scope}`;
+
 export const GROUPS = [
   { fase: 'Grupo A', teams: ['México', 'África do Sul', 'Coreia do Sul', 'República Tcheca'] },
   { fase: 'Grupo B', teams: ['Canadá', 'Bósnia', 'Qatar', 'Suíça'] },
@@ -114,28 +116,30 @@ const INITIAL_GAMES = buildInitialGames().map(g => ({
 
 export const gameService = {
   // Obter todos os jogos
-  getAllGames: () => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+  getGameStorageKey: (scope = 'guest') => resolveStorageKey(scope),
+
+  getAllGames: (storageKey = STORAGE_KEY) => {
+    const saved = localStorage.getItem(storageKey);
     const games = saved ? JSON.parse(saved) : INITIAL_GAMES;
     return dedupeGames(games);
   },
 
   // Obter um jogo por ID
-  getGameById: (id) => {
-    const games = gameService.getAllGames();
+  getGameById: (id, storageKey = STORAGE_KEY) => {
+    const games = gameService.getAllGames(storageKey);
     return games.find(game => game.id === id);
   },
 
   // Salvar todos os jogos
-  saveGames: (games) => {
+  saveGames: (games, storageKey = STORAGE_KEY) => {
     const sanitizedGames = dedupeGames(games);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizedGames));
+    localStorage.setItem(storageKey, JSON.stringify(sanitizedGames));
     return sanitizedGames;
   },
 
   // Atualizar placar de um jogo
-  updateGameScore: (id, placarM, placarV) => {
-    const games = gameService.getAllGames();
+  updateGameScore: (id, placarM, placarV, storageKey = STORAGE_KEY) => {
+    const games = gameService.getAllGames(storageKey);
     const updatedGames = games.map(game =>
       game.id === id
         ? {
@@ -145,12 +149,12 @@ export const gameService = {
           }
         : game
     );
-    return gameService.saveGames(updatedGames);
+    return gameService.saveGames(updatedGames, storageKey);
   },
 
   // Adicionar novo jogo
-  addGame: (mandante, visitante, fase) => {
-    const games = gameService.getAllGames();
+  addGame: (mandante, visitante, fase, storageKey = STORAGE_KEY) => {
+    const games = gameService.getAllGames(storageKey);
     const newGame = {
       id: Math.max(...games.map(g => g.id), 0) + 1,
       mandante,
@@ -159,25 +163,25 @@ export const gameService = {
       placarV: null,
       fase,
     };
-    return gameService.saveGames([...games, newGame]);
+    return gameService.saveGames([...games, newGame], storageKey);
   },
 
   // Remover jogo
-  removeGame: (id) => {
-    const games = gameService.getAllGames();
+  removeGame: (id, storageKey = STORAGE_KEY) => {
+    const games = gameService.getAllGames(storageKey);
     const filtered = games.filter(game => game.id !== id);
-    return gameService.saveGames(filtered);
+    return gameService.saveGames(filtered, storageKey);
   },
 
   // Limpar todos os dados
-  clearAllData: () => {
-    localStorage.removeItem(STORAGE_KEY);
+  clearAllData: (storageKey = STORAGE_KEY) => {
+    localStorage.removeItem(storageKey);
     return INITIAL_GAMES;
   },
 
   // Obter jogos por fase
-  getGamesByPhase: (phase) => {
-    const games = gameService.getAllGames();
+  getGamesByPhase: (phase, storageKey = STORAGE_KEY) => {
+    const games = gameService.getAllGames(storageKey);
     return games.filter(game => game.fase === phase);
   },
 

@@ -3,6 +3,7 @@ import Card from '../../components/Card/Card';
 import GameInput from '../../components/GameInput/GameInput';
 import { GROUPS, ROUNDS } from '../../services/gameService';
 import { computeGroupStandings } from '../../utils/helpers';
+import { useToast } from '../../context/ToastContext';
 import './cupTable.scss';
 
 export default function CupTablePage({
@@ -23,6 +24,31 @@ export default function CupTablePage({
   const updateScore = externalUpdateScore ?? hookUpdateScore;
   const save = externalSave ?? hookSave;
   const clearData = externalClearData ?? hookClearData;
+  const { pushToast } = useToast();
+
+  const handleSave = async () => {
+    try {
+      const result = await save();
+
+      if (result?.status === 'auth-required') {
+        pushToast({
+          type: 'warning',
+          message: 'Faça login para salvar seus palpites no banco.',
+        });
+        return;
+      }
+
+      pushToast({
+        type: 'success',
+        message: 'Palpites salvos com sucesso.',
+      });
+    } catch {
+      pushToast({
+        type: 'error',
+        message: 'Não foi possível salvar os palpites. Tente novamente.',
+      });
+    }
+  };
 
   const gamesByPhase = GROUPS.reduce((acc, group) => {
     acc[group.fase] = ROUNDS.map((round) => ({
@@ -136,8 +162,8 @@ export default function CupTablePage({
 
               {editable && (
                 <div className="phase-actions">
-                  <button className="btn btn-success" onClick={save}>Salvar palpites</button>
-                  <button className="btn btn-secondary" onClick={clearData}>Recarregar padrão</button>
+                  <button className="btn btn-secondary" onClick={clearData}>Limpar palpites</button>
+                  <button className="btn btn-success" onClick={handleSave}>Salvar palpites</button>
                 </div>
               )}
             </div>
