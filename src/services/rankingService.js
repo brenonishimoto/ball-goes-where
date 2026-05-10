@@ -72,4 +72,13 @@ export const rankingService = {
     const data = await requestJson('/leaderboard', { method: 'GET' });
     return Array.isArray(data.leaderboard) ? data.leaderboard : [];
   },
+
+  async refreshLeaderboard({ token }) {
+    const data = await requestJson('/refresh', {
+      method: 'POST',
+      token,
+    });
+
+    return data;
+  },
 };

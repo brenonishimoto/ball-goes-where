@@ -5,7 +5,7 @@ import { predictionService } from '../services/predictionService';
 import { scoringService } from '../services/scoringService';
 import { rankingService } from '../services/rankingService';
 
-export const useGames = () => {
+export const useGames = ({ enabled = true } = {}) => {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const { token, user, loadingAuth } = useAuth();
@@ -14,6 +14,11 @@ export const useGames = () => {
 
   // Carregar jogos ao montar
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return undefined;
+    }
+
     let isActive = true;
 
     const loadGames = async () => {
@@ -66,7 +71,7 @@ export const useGames = () => {
     return () => {
       isActive = false;
     };
-  }, [loadingAuth, token, storageKey]);
+  }, [enabled, loadingAuth, token, storageKey]);
 
   // Atualizar placar
   const updateScore = useCallback((id, placarM, placarV) => {

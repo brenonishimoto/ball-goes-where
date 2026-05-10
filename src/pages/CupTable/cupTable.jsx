@@ -13,12 +13,13 @@ export default function CupTablePage({
   save: externalSave,
   clearData: externalClearData,
 }) {
+  const useHookGames = editable && !externalGames;
   const {
     games: hookGames,
     updateScore: hookUpdateScore,
     save: hookSave,
     clearData: hookClearData,
-  } = useGames();
+  } = useGames({ enabled: useHookGames });
 
   const officialGames = gameService.getAllGames(gameService.getGameStorageKey('guest'));
   const games = editable ? (externalGames ?? hookGames) : officialGames;

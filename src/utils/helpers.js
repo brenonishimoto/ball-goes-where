@@ -1,3 +1,5 @@
+import { scoringService } from '../services/scoringService';
+
 // Formatar resultado (ex: 2-1)
 export const formatScore = (placarM, placarV) => {
   if (placarM === null || placarV === null) return '-';
@@ -19,16 +21,14 @@ export const countPredictions = (games) => {
 
 // Calcular pontos totais
 export const calculateTotalPoints = (games) => {
-  // Pontuação: 3 pontos apenas para placar exato igual ao resultado oficial
+  // Usa a mesma regra do ranking: 3 pontos pelo resultado e +2 pelo placar exato.
   return games.reduce((total, game) => {
-    if (
-      game.officialM === null ||
-      game.officialV === null ||
-      game.placarM === null ||
-      game.placarV === null
-    ) return total;
-
-    return total + (Number(game.officialM) === Number(game.placarM) && Number(game.officialV) === Number(game.placarV) ? 3 : 0);
+    return total + scoringService.calculatePhase02Score(
+      game.placarM,
+      game.placarV,
+      game.officialM,
+      game.officialV,
+    );
   }, 0);
 };
 

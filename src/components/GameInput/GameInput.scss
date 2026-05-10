@@ -149,6 +149,34 @@
   color: #16a34a;
 }
 
+.game-points {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  margin-top: 0.55rem;
+  border-radius: 0.375rem;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  font-size: 0.875rem;
+}
+
+.game-points-label {
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.game-points-value {
+  font-weight: 800;
+  color: #1e40af;
+}
+
+.game-points-pending {
+  font-weight: 600;
+  color: #6b7280;
+}
+
 @media (max-width: 768px) {
   .game-header {
     align-items: flex-start;
@@ -173,5 +201,10 @@
 
   .team-name {
     font-size: 0.95rem;
+  }
+
+  .game-points {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

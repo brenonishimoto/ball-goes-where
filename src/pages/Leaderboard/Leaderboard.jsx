@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Card from '../../components/Card/Card';
+import { useAuth } from '../../context/AuthContext';
 import { rankingService } from '../../services/rankingService';
 import './leaderboard.scss';
 
@@ -7,6 +8,8 @@ export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const { token, isAuthenticated } = useAuth();
 
   useEffect(() => {
     loadLeaderboard();
@@ -26,6 +29,20 @@ export default function LeaderboardPage() {
     }
   };
 
+  const refreshLeaderboard = async () => {
+    try {
+      setRefreshing(true);
+      setError(null);
+      await rankingService.refreshLeaderboard({ token });
+      await loadLeaderboard();
+    } catch (err) {
+      console.error('Erro ao atualizar ranking:', err);
+      setError(err.message || 'Erro ao atualizar ranking');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const getMedalEmoji = (position) => {
     if (position === 1) return '🥇';
     if (position === 2) return '🥈';
@@ -38,6 +55,11 @@ export default function LeaderboardPage() {
       <div className="page-header">
         <h1>🏆 Ranking</h1>
         <p>Veja os melhores palpites</p>
+        {isAuthenticated && (
+          <button className="btn btn-secondary leaderboard-refresh" onClick={refreshLeaderboard} disabled={refreshing || loading}>
+            {refreshing ? 'Atualizando...' : 'Atualizar ranking'}
+          </button>
+        )}
       </div>
 
       {loading && (

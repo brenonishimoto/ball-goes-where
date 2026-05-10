@@ -1,9 +1,18 @@
 import './GameInput.scss';
+import { scoringService } from '../../services/scoringService';
 
 export default function GameInput({
   game,
   onScoreChange,
 }) {
+  const gamePoints = scoringService.calculatePhase02Score(
+    game.placarM,
+    game.placarV,
+    game.officialM,
+    game.officialV,
+  );
+
+  const hasOfficialResult = game.officialM !== null && game.officialV !== null;
   const handleMandanteChange = (e) => {
     onScoreChange(game.id, e.target.value, game.placarV);
   };
@@ -61,6 +70,15 @@ export default function GameInput({
             <span className="official-result">{game.officialM}-{game.officialV}</span>
           </div>
         )}
+
+        <div className="game-points" aria-live="polite">
+          <span className="game-points-label">Pontuação no jogo:</span>
+          {hasOfficialResult ? (
+            <span className="game-points-value">{gamePoints} pts</span>
+          ) : (
+            <span className="game-points-pending">Aguardando resultado</span>
+          )}
+        </div>
       </div>
     </div>
   );

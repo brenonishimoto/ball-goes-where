@@ -108,13 +108,36 @@ const dedupeGames = (games) => {
   });
 };
 
-const INITIAL_GAMES = buildInitialGames().map(g => ({
+export const INITIAL_GAMES = buildInitialGames().map(g => ({
   ...g,
   officialM: g.officialM ?? null,
   officialV: g.officialV ?? null,
 }));
 
 const cloneInitialGames = () => INITIAL_GAMES.map(game => ({ ...game }));
+
+const enrichWithInitialGames = (games) => {
+  const baseById = new Map(INITIAL_GAMES.map((game) => [game.id, game]));
+
+  return dedupeGames(games).map((game) => {
+    const baseGame = baseById.get(game.id);
+
+    if (!baseGame) {
+      return {
+        ...game,
+        officialM: game.officialM ?? null,
+        officialV: game.officialV ?? null,
+      };
+    }
+
+    return {
+      ...baseGame,
+      ...game,
+      officialM: game.officialM ?? baseGame.officialM ?? null,
+      officialV: game.officialV ?? baseGame.officialV ?? null,
+    };
+  });
+};
 
 export const gameService = {
   // Obter todos os jogos
@@ -126,7 +149,7 @@ export const gameService = {
       return cloneInitialGames();
     }
 
-    const games = dedupeGames(JSON.parse(saved));
+    const games = enrichWithInitialGames(JSON.parse(saved));
     return games.length > 0 ? games : cloneInitialGames();
   },
 
@@ -138,7 +161,7 @@ export const gameService = {
 
   // Salvar todos os jogos
   saveGames: (games, storageKey = STORAGE_KEY) => {
-    const sanitizedGames = dedupeGames(games);
+    const sanitizedGames = enrichWithInitialGames(games);
     localStorage.setItem(storageKey, JSON.stringify(sanitizedGames));
     return sanitizedGames;
   },

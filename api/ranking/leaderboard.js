@@ -64,7 +64,9 @@ export default async function handler(request, response) {
         COALESCE(us.total_score, 0) as total_score,
         COALESCE(us.phase02_score, 0) as phase02_score,
         COALESCE(us.updated_at, now()) as updated_at,
-        ROW_NUMBER() OVER (ORDER BY COALESCE(us.total_score, 0) DESC, COALESCE(us.updated_at, now()) DESC) as position
+        ROW_NUMBER() OVER (
+          ORDER BY COALESCE(us.total_score, 0) DESC, COALESCE(us.updated_at, now()) DESC
+        ) as position
       FROM neon_auth."user" u
       LEFT JOIN public.user_scores us ON u.id = us.user_id
       ORDER BY COALESCE(us.total_score, 0) DESC, COALESCE(us.updated_at, now()) DESC

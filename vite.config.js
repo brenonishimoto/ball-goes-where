@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react-swc'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
+import { INITIAL_GAMES } from './src/services/gameService.js'
+import { scoringService } from './src/services/scoringService.js'
 
 const readJsonBody = async (request) => {
   const chunks = []
@@ -160,6 +162,23 @@ const getBearerToken = (request) => {
   }
 
   return rawHeader.slice(7).trim()
+}
+
+const normalizeGames = (value) => {
+  if (Array.isArray(value)) {
+    return value
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      const parsed = JSON.parse(value)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+
+  return []
 }
 
 const queryNeon = async (databaseUrl, query, params = []) => {
@@ -589,6 +608,106 @@ const neonApiPlugin = (env) => ({
         } catch (error) {
           sendJson(500, {
             error: error instanceof Error ? error.message : 'Erro ao buscar ranking.',
+          })
+          return
+        }
+      }
+
+      if (requestUrl.pathname === '/api/ranking/refresh') {
+        const sendJson = (statusCode, payload) => {
+          response.statusCode = statusCode
+          response.setHeader('Content-Type', 'application/json; charset=utf-8')
+          response.end(JSON.stringify(payload))
+        }
+
+        if (request.method === 'OPTIONS') {
+          response.statusCode = 204
+          response.setHeader('Access-Control-Allow-Origin', '*')
+          response.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+          response.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS')
+          response.end()
+          return
+        }
+
+        const databaseUrl = env.DATABASE_URL || process.env.DATABASE_URL
+
+        if (!databaseUrl) {
+          sendJson(500, { error: 'DATABASE_URL não configurado.' })
+          return
+        }
+
+        const authSecret = env.AUTH_SECRET || process.env.AUTH_SECRET || 'dev-auth-secret-change-this'
+
+        try {
+          const bearerToken = getBearerToken(request)
+          const payload = verifyAuthToken(bearerToken, authSecret)
+
+          if (!payload?.sub) {
+            sendJson(401, { error: 'Sessão inválida ou expirada.' })
+            return
+          }
+
+          const officialGamesById = new Map(INITIAL_GAMES.map((game) => [game.id, game]))
+          const users = await queryNeon(
+            databaseUrl,
+            `
+            SELECT id
+            FROM neon_auth."user"
+            ORDER BY id ASC
+          `
+          )
+
+          const predictions = await queryNeon(
+            databaseUrl,
+            `
+            SELECT user_id, games
+            FROM public.user_predictions
+          `
+          )
+
+          const predictionsByUserId = new Map(
+            predictions.map((row) => [row.user_id, normalizeGames(row.games)])
+          )
+
+          let refreshed = 0
+
+          for (const user of users) {
+            const savedGames = predictionsByUserId.get(user.id) || []
+            const enrichedGames = savedGames.map((game) => {
+              const officialGame = officialGamesById.get(game.id)
+              if (!officialGame) return game
+              return {
+                ...officialGame,
+                ...game,
+                officialM: game.officialM ?? officialGame.officialM ?? null,
+                officialV: game.officialV ?? officialGame.officialV ?? null,
+              }
+            })
+
+            const scorePayload = scoringService.calculateScorePayload(enrichedGames)
+
+            await queryNeon(
+              databaseUrl,
+              `
+              INSERT INTO public.user_scores (user_id, total_score, phase02_score, calculated_at, updated_at)
+              VALUES ($1, $2, $3, now(), now())
+              ON CONFLICT (user_id) DO UPDATE
+              SET total_score = EXCLUDED.total_score,
+                  phase02_score = EXCLUDED.phase02_score,
+                  calculated_at = now(),
+                  updated_at = now()
+            `,
+              [user.id, Number(scorePayload.totalScore) || 0, Number(scorePayload.phase02) || 0]
+            )
+
+            refreshed += 1
+          }
+
+          sendJson(200, { refreshed })
+          return
+        } catch (error) {
+          sendJson(500, {
+            error: error instanceof Error ? error.message : 'Erro ao atualizar ranking.',
           })
           return
         }
