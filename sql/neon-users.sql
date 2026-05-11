@@ -25,6 +25,7 @@ create table if not exists public.user_predictions (
   user_id uuid primary key references neon_auth."user"(id) on delete cascade,
   phase2_predictions jsonb not null default '[]'::jsonb,
   phase1_predictions jsonb not null default '{}'::jsonb,
+  phase3_predictions jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp
 );
@@ -36,6 +37,7 @@ create table if not exists public.user_scores (
   total_score integer not null default 0,
   phase1_score integer not null default 0,
   phase2_score integer not null default 0,
+  phase3_score integer not null default 0,
   calculated_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp
 );

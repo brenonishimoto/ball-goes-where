@@ -131,24 +131,40 @@ export default async function handler(request, response) {
 
     try {
       const scorePayload = scoringService.calculateScorePayload(savedGames)
+      const currentScoreRows = await queryNeon(
+        databaseUrl,
+        `
+        SELECT phase1_score, phase3_score
+        FROM public.user_scores
+        WHERE user_id = $1
+        LIMIT 1
+      `,
+        [payload.sub]
+      )
+      const phase1Score = Number(currentScoreRows[0]?.phase1_score) || 0
+      const phase2Score = Number(scorePayload.phase2Score) || 0
+      const phase3Score = Number(currentScoreRows[0]?.phase3_score) || 0
+      const totalScore = phase1Score + phase2Score + phase3Score
 
       await queryNeon(
         databaseUrl,
         `
-        INSERT INTO public.user_scores (user_id, total_score, phase1_score, phase2_score, calculated_at, updated_at)
-        VALUES ($1, $2, $3, $4, now(), now())
+        INSERT INTO public.user_scores (user_id, total_score, phase1_score, phase2_score, phase3_score, calculated_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, now(), now())
         ON CONFLICT (user_id) DO UPDATE
         SET total_score = EXCLUDED.total_score,
             phase1_score = EXCLUDED.phase1_score,
             phase2_score = EXCLUDED.phase2_score,
+            phase3_score = EXCLUDED.phase3_score,
             calculated_at = now(),
             updated_at = now()
       `,
         [
           payload.sub,
-          Number(scorePayload.totalScore) || 0,
-          Number(scorePayload.phase1Score) || 0,
-          Number(scorePayload.phase2Score) || 0,
+          totalScore,
+          phase1Score,
+          phase2Score,
+          phase3Score,
         ]
       )
     } catch (scoreError) {

@@ -64,6 +64,7 @@ export default async function handler(request, response) {
         COALESCE(us.total_score, 0) as total_score,
         COALESCE(us.phase1_score, 0) as phase1_score,
         COALESCE(us.phase2_score, 0) as phase2_score,
+        COALESCE(us.phase3_score, 0) as phase3_score,
         COALESCE(us.updated_at, now()) as updated_at,
         ROW_NUMBER() OVER (
           ORDER BY COALESCE(us.total_score, 0) DESC, COALESCE(us.updated_at, now()) DESC
@@ -83,6 +84,7 @@ export default async function handler(request, response) {
       totalScore: Number(row.total_score) || 0,
       phase1Score: Number(row.phase1_score) || 0,
       phase2Score: Number(row.phase2_score) || 0,
+      phase3Score: Number(row.phase3_score) || 0,
       updatedAt: row.updated_at,
     }))
 

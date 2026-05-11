@@ -59,6 +59,7 @@ export default function Header() {
             <Link to="/table" className="nav-link">Tabela</Link>
             <Link to="/phase1" className="nav-link">Fase 1</Link>
             <Link to="/phase2" className="nav-link">Fase 2</Link>
+            <Link to="/phase3" className="nav-link">Fase 3</Link>
             <Link to="/leaderboard" className="nav-link">Ranking</Link>
             <button
               type="button"

@@ -99,6 +99,9 @@ export default function LeaderboardPage() {
                 <tr>
                   <th className="col-rank">Posição</th>
                   <th className="col-name">Nome</th>
+                  <th className="col-phase">F1</th>
+                  <th className="col-phase">F2</th>
+                  <th className="col-phase">F3</th>
                   <th className="col-score">Pontuação</th>
                 </tr>
               </thead>
@@ -110,6 +113,9 @@ export default function LeaderboardPage() {
                       <span className="position">#{entry.position}</span>
                     </td>
                     <td className="col-name">{entry.name}</td>
+                    <td className="col-phase">{entry.phase1Score}</td>
+                    <td className="col-phase">{entry.phase2Score}</td>
+                    <td className="col-phase">{entry.phase3Score}</td>
                     <td className="col-score">
                       <strong>{entry.totalScore}</strong> pts
                     </td>

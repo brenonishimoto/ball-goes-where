@@ -110,6 +110,11 @@
           text-align: right;
           width: 150px;
         }
+
+        &.col-phase {
+          text-align: center;
+          width: 72px;
+        }
       }
     }
 
@@ -173,6 +178,12 @@
             strong {
               font-size: 1.1rem;
             }
+          }
+
+          &.col-phase {
+            text-align: center;
+            color: #4b5563;
+            font-weight: 700;
           }
         }
       }

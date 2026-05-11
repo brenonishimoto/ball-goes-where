@@ -6,7 +6,9 @@ import {
   verifyAuthToken,
 } from '../../src/server/auth.js'
 import { INITIAL_GAMES } from '../../src/services/gameService.js'
+import { PHASE3_RESULTS } from '../../src/services/phase3Results.js'
 import { scoringService } from '../../src/services/scoringService.js'
+import { calculatePhase3TotalScore } from '../../src/services/phase3Scoring.js'
 
 export const config = {
   runtime: 'nodejs',
@@ -45,6 +47,23 @@ const normalizeGames = (value) => {
   }
 
   return []
+}
+
+const normalizeObject = (value) => {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      const parsed = JSON.parse(value)
+      return normalizeObject(parsed)
+    } catch {
+      return {}
+    }
+  }
+
+  return {}
 }
 
 const buildOfficialLookup = () => new Map(INITIAL_GAMES.map((game) => [game.id, game]))
@@ -126,7 +145,7 @@ export default async function handler(request, response) {
     const predictions = await queryNeon(
       databaseUrl,
       `
-      SELECT user_id, phase2_predictions, updated_at
+      SELECT user_id, phase2_predictions, phase3_predictions, updated_at
       FROM public.user_predictions
     `
     )
@@ -134,8 +153,24 @@ export default async function handler(request, response) {
     const predictionsByUserId = new Map(
       predictions.map((row) => [
         row.user_id,
-        { games: normalizeGames(row.phase2_predictions), updatedAt: row.updated_at },
+        {
+          games: normalizeGames(row.phase2_predictions),
+          phase3Predictions: normalizeObject(row.phase3_predictions),
+          updatedAt: row.updated_at,
+        },
       ])
+    )
+
+    const currentScores = await queryNeon(
+      databaseUrl,
+      `
+      SELECT user_id, phase1_score
+      FROM public.user_scores
+    `
+    )
+
+    const currentScoresByUserId = new Map(
+      currentScores.map((row) => [row.user_id, row])
     )
 
     const updates = []
@@ -144,32 +179,42 @@ export default async function handler(request, response) {
       const predictionRow = predictionsByUserId.get(user.id)
       const games = predictionRow ? enrichGames(predictionRow.games) : []
       const scorePayload = scoringService.calculateScorePayload(games)
+      const currentScore = currentScoresByUserId.get(user.id)
+      const phase1Score = Number(currentScore?.phase1_score) || 0
+      const phase2Score = Number(scorePayload.phase2Score) || 0
+      const phase3Score = predictionRow
+        ? calculatePhase3TotalScore(predictionRow.phase3Predictions, PHASE3_RESULTS)
+        : 0
+      const totalScore = phase1Score + phase2Score + phase3Score
 
       await queryNeon(
         databaseUrl,
         `
-        INSERT INTO public.user_scores (user_id, total_score, phase1_score, phase2_score, calculated_at, updated_at)
-        VALUES ($1, $2, $3, $4, now(), now())
+        INSERT INTO public.user_scores (user_id, total_score, phase1_score, phase2_score, phase3_score, calculated_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, now(), now())
         ON CONFLICT (user_id) DO UPDATE
         SET total_score = EXCLUDED.total_score,
             phase1_score = EXCLUDED.phase1_score,
             phase2_score = EXCLUDED.phase2_score,
+            phase3_score = EXCLUDED.phase3_score,
             calculated_at = now(),
             updated_at = now()
       `,
         [
           user.id,
-          Number(scorePayload.totalScore) || 0,
-          Number(scorePayload.phase1Score) || 0,
-          Number(scorePayload.phase2Score ?? 0) || 0,
+          totalScore,
+          phase1Score,
+          phase2Score,
+          phase3Score,
         ]
       )
 
       updates.push({
         userId: user.id,
-        totalScore: Number(scorePayload.totalScore) || 0,
-        phase1Score: Number(scorePayload.phase1Score) || 0,
-        phase2Score: Number(scorePayload.phase2Score) || 0,
+        totalScore,
+        phase1Score,
+        phase2Score,
+        phase3Score,
         hasPredictions: Boolean(predictionRow),
       })
     }

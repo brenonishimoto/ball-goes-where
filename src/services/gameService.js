@@ -4,16 +4,16 @@ const resolveStorageKey = (scope = 'guest') => `${STORAGE_KEY}:${scope}`;
 
 export const GROUPS = [
   { fase: 'Grupo A', teams: ['México', 'África do Sul', 'Coreia do Sul', 'República Tcheca'] },
-  { fase: 'Grupo B', teams: ['Canadá', 'Bósnia', 'Qatar', 'Suíça'] },
+  { fase: 'Grupo B', teams: ['Canadá', 'Bósnia e Herzegovina', 'Catar', 'Suíça'] },
   { fase: 'Grupo C', teams: ['Brasil', 'Marrocos', 'Haiti', 'Escócia'] },
   { fase: 'Grupo D', teams: ['Estados Unidos', 'Paraguai', 'Austrália', 'Turquia'] },
-  { fase: 'Grupo E', teams: ['Alemanha', 'Curaçao', 'Costa do Marfim', 'Equador'] },
+  { fase: 'Grupo E', teams: ['Alemanha', 'Curaçau', 'Costa do Marfim', 'Equador'] },
   { fase: 'Grupo F', teams: ['Holanda', 'Japão', 'Suécia', 'Tunísia'] },
   { fase: 'Grupo G', teams: ['Bélgica', 'Egito', 'Irã', 'Nova Zelândia'] },
   { fase: 'Grupo H', teams: ['Espanha', 'Cabo Verde', 'Arábia Saudita', 'Uruguai'] },
   { fase: 'Grupo I', teams: ['França', 'Senegal', 'Iraque', 'Noruega'] },
   { fase: 'Grupo J', teams: ['Argentina', 'Argélia', 'Áustria', 'Jordânia'] },
-  { fase: 'Grupo K', teams: ['Portugal', 'RD Congo', 'Uzbequistão', 'Colômbia'] },
+  { fase: 'Grupo K', teams: ['Portugal', 'Rep. Democrática do Congo', 'Uzbequistão', 'Colômbia'] },
   { fase: 'Grupo L', teams: ['Inglaterra', 'Croácia', 'Gana', 'Panamá'] },
 ];
 

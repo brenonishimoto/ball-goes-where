@@ -6,6 +6,8 @@ import {
   resolveDatabaseUrl,
   verifyAuthToken,
 } from '../../../src/server/auth.js'
+import { PHASE3_RESULTS } from '../../../src/services/phase3Results.js'
+import { calculatePhase3TotalScore } from '../../../src/services/phase3Scoring.js'
 
 export const config = {
   runtime: 'nodejs',
@@ -31,10 +33,7 @@ const getBearerToken = (request) => {
 
 const normalizePredictions = (value) => {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
-    const predictionValues = { ...value }
-    delete predictionValues[0]
-    delete predictionValues[1]
-    return predictionValues
+    return value
   }
 
   if (typeof value === 'string' && value.trim()) {
@@ -49,10 +48,44 @@ const normalizePredictions = (value) => {
   return {}
 }
 
+const syncPhase3Score = async (databaseUrl, userId, phase3Predictions) => {
+  const phase3Score = calculatePhase3TotalScore(phase3Predictions, PHASE3_RESULTS)
+  const currentRows = await queryNeon(
+    databaseUrl,
+    `
+    SELECT phase1_score, phase2_score
+    FROM public.user_scores
+    WHERE user_id = $1
+    LIMIT 1
+  `,
+    [userId]
+  )
+
+  const phase1Score = Number(currentRows[0]?.phase1_score) || 0
+  const phase2Score = Number(currentRows[0]?.phase2_score) || 0
+  const totalScore = phase1Score + phase2Score + phase3Score
+
+  await queryNeon(
+    databaseUrl,
+    `
+    INSERT INTO public.user_scores (user_id, total_score, phase1_score, phase2_score, phase3_score, calculated_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, now(), now())
+    ON CONFLICT (user_id) DO UPDATE
+    SET total_score = EXCLUDED.total_score,
+        phase1_score = EXCLUDED.phase1_score,
+        phase2_score = EXCLUDED.phase2_score,
+        phase3_score = EXCLUDED.phase3_score,
+        calculated_at = now(),
+        updated_at = now()
+  `,
+    [userId, totalScore, phase1Score, phase2Score, phase3Score]
+  )
+}
+
 export default async function handler(request, response) {
   const requestId = makeRequestId()
   const startedAt = Date.now()
-  const route = 'predictions.phase1.me'
+  const route = 'predictions.phase3.me'
 
   if (request.method === 'OPTIONS') {
     response.statusCode = 204
@@ -64,7 +97,7 @@ export default async function handler(request, response) {
   }
 
   if (request.method !== 'GET' && request.method !== 'PUT') {
-    sendJson(response, 405, { error: 'Método não permitido.' })
+    sendJson(response, 405, { error: 'Metodo nao permitido.' })
     return
   }
 
@@ -76,7 +109,7 @@ export default async function handler(request, response) {
       method: request.method,
     })
     sendJson(response, 500, {
-      error: 'URL do banco não configurada.',
+      error: 'URL do banco nao configurada.',
     })
     return
   }
@@ -91,7 +124,7 @@ export default async function handler(request, response) {
     const payload = verifyAuthToken(bearerToken, authSecret)
 
     if (!payload?.sub) {
-      sendJson(response, 401, { error: 'Sessão inválida ou expirada.' })
+      sendJson(response, 401, { error: 'Sessao invalida ou expirada.' })
       return
     }
 
@@ -99,7 +132,7 @@ export default async function handler(request, response) {
       const rows = await queryNeon(
         databaseUrl,
         `
-        SELECT phase1_predictions
+        SELECT phase3_predictions
         FROM public.user_predictions
         WHERE user_id = $1
         LIMIT 1
@@ -107,39 +140,37 @@ export default async function handler(request, response) {
         [payload.sub]
       )
 
-      const phase1_predictions = rows.length ? normalizePredictions(rows[0].phase1_predictions) : {}
+      const phase3_predictions = rows.length ? normalizePredictions(rows[0].phase3_predictions) : {}
 
-      sendJson(response, 200, { phase1_predictions })
+      sendJson(response, 200, { phase3_predictions })
       return
     }
 
     const body = await readJsonBody(request)
-    const phase1_predictions = normalizePredictions(body.phase1_predictions)
+    const phase3_predictions = normalizePredictions(body.phase3_predictions)
 
     const rows = await queryNeon(
       databaseUrl,
       `
-      UPDATE public.user_predictions
-      SET phase1_predictions = $2::jsonb,
+      INSERT INTO public.user_predictions (user_id, phase3_predictions, updated_at)
+      VALUES ($1, $2::jsonb, now())
+      ON CONFLICT (user_id) DO UPDATE
+      SET phase3_predictions = EXCLUDED.phase3_predictions,
           updated_at = now()
-      WHERE user_id = $1
-      RETURNING phase1_predictions
+      RETURNING phase3_predictions
     `,
-      [payload.sub, JSON.stringify(phase1_predictions)]
+      [payload.sub, JSON.stringify(phase3_predictions)]
     )
 
-    if (rows.length === 0) {
-      await queryNeon(
-        databaseUrl,
-        `
-        INSERT INTO public.user_predictions (user_id, phase1_predictions, updated_at)
-        VALUES ($1, $2::jsonb, now())
-      `,
-        [payload.sub, JSON.stringify(phase1_predictions)]
-      )
-    }
+    const savedPredictions = rows.length ? normalizePredictions(rows[0].phase3_predictions) : phase3_predictions
 
-    const savedPredictions = rows.length ? normalizePredictions(rows[0].phase1_predictions) : phase1_predictions
+    try {
+      await syncPhase3Score(databaseUrl, payload.sub, savedPredictions)
+    } catch (scoreError) {
+      logAuthEvent('error', route, requestId, 'score sync failed', {
+        error: scoreError instanceof Error ? scoreError.message : String(scoreError),
+      })
+    }
 
     logAuthEvent('info', route, requestId, 'request completed', {
       method: request.method,
@@ -147,7 +178,7 @@ export default async function handler(request, response) {
       duration: Date.now() - startedAt,
     })
 
-    sendJson(response, 200, { phase1_predictions: savedPredictions })
+    sendJson(response, 200, { phase3_predictions: savedPredictions })
   } catch (error) {
     logAuthEvent('error', route, requestId, 'unexpected error', {
       error: error instanceof Error ? error.message : String(error),
@@ -156,7 +187,7 @@ export default async function handler(request, response) {
     })
 
     sendJson(response, 500, {
-      error: 'Falha ao processar requisição.',
+      error: 'Falha ao processar requisicao.',
     })
   }
 }
