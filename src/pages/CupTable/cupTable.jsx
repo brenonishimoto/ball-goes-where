@@ -31,6 +31,10 @@ export default function CupTablePage({
   const { pushToast } = useToast();
   const [saving, setSaving] = useState(false);
 
+  const totalGames = games.length;
+  const finishedGames = games.filter((game) => game.officialM !== null && game.officialV !== null).length;
+  const totalGroups = GROUPS.length;
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -74,10 +78,28 @@ export default function CupTablePage({
   return (
     <div className="cup-table-page">
       {!editable && (
-        <div className="page-header">
-          <h1>📊 Tabela da Copa</h1>
-          <p>Acompanhe todos os jogos e resultados</p>
-        </div>
+        <section className="table-header">
+          <div className="hero-copy">
+            <span className="eyebrow">TABELA OFICIAL</span>
+            <h1>Tabela da Copa</h1>
+            <p>Acompanhe os jogos da fase de grupos e a classificacao atualizada.</p>
+          </div>
+
+          <div className="table-stats" aria-live="polite">
+            <div className="table-stat-card">
+              <span className="table-stat-value">{totalGroups}</span>
+              <span className="table-stat-label">Grupos</span>
+            </div>
+            <div className="table-stat-card">
+              <span className="table-stat-value">{finishedGames}</span>
+              <span className="table-stat-label">Finalizados</span>
+            </div>
+            <div className="table-stat-card">
+              <span className="table-stat-value">{totalGames}</span>
+              <span className="table-stat-label">Jogos</span>
+            </div>
+          </div>
+        </section>
       )}
 
       <div className="phases-container">

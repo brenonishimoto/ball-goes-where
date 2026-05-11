@@ -1,17 +1,14 @@
-import { PHASE3_MATCHES } from './phase3Bracket.js';
+import { INITIAL_KNOCKOUT_GAMES, resolveKnockoutGames } from './mataMataService.js';
 
-// Preencha aqui os resultados oficiais da Fase 3 para validar os palpites.
-// scoreA/scoreB representam o placar usado na regra "resultado no tempo normal".
-// Em empate, defina winner como 'A' ou 'B' para indicar o classificado nos penaltis.
-const emptyResult = {
-  teamA: '',
-  teamB: '',
-  scoreA: null,
-  scoreB: null,
-  winner: '',
-};
+const resolvedOfficialGames = resolveKnockoutGames(INITIAL_KNOCKOUT_GAMES);
 
-export const PHASE3_RESULTS = PHASE3_MATCHES.reduce((acc, match) => {
-  acc[match.id] = { ...emptyResult };
+export const PHASE3_RESULTS = resolvedOfficialGames.reduce((acc, match) => {
+  acc[match.id] = {
+    teamA: match.mandante || '',
+    teamB: match.visitante || '',
+    scoreA: match.officialM,
+    scoreB: match.officialV,
+    winner: match.winner || '',
+  };
   return acc;
 }, {});

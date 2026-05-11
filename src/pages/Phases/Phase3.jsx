@@ -1,17 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { useGames } from '../../hooks/useGames';
-import { GROUPS } from '../../services/gameService';
 import {
   PHASE3_MATCHES,
   PHASE3_ROUNDS,
   normalizePhase3Predictions,
 } from '../../services/phase3Bracket';
+import { INITIAL_KNOCKOUT_GAMES, resolveKnockoutGames } from '../../services/mataMataService';
 import { PHASE3_RESULTS } from '../../services/phase3Results';
 import { calculatePhase3MatchScore, calculatePhase3TotalScore, calculatePhase3SlamsCount } from '../../services/phase3Scoring';
 import { phase3Service } from '../../services/phase3Service';
-import { computeGroupStandings } from '../../utils/helpers';
 import './phase3.scss';
 
 const LOCAL_STORAGE_KEY = 'phase3-predictions';
@@ -36,10 +34,19 @@ const formatOfficialResult = (official) => {
 export default function Phase3Page() {
   const { user, token } = useAuth();
   const { pushToast } = useToast();
-  const { games: phase2Games } = useGames();
   const [predictions, setPredictions] = useState(() => normalizePhase3Predictions({}));
   const [activeRound, setActiveRound] = useState('round32');
   const [isSaving, setIsSaving] = useState(false);
+
+  const knockoutGames = useMemo(
+    () => resolveKnockoutGames(INITIAL_KNOCKOUT_GAMES),
+    []
+  );
+
+  const knockoutById = useMemo(
+    () => new Map(knockoutGames.map((match) => [match.id, match])),
+    [knockoutGames]
+  );
 
   const earnedPoints = useMemo(
     () => calculatePhase3TotalScore(predictions, PHASE3_RESULTS),
@@ -51,77 +58,10 @@ export default function Phase3Page() {
     [predictions]
   );
 
-  const standingsByGroup = useMemo(() => GROUPS.reduce((acc, group) => {
-    acc[group.fase] = computeGroupStandings(
-      phase2Games.filter((game) => game.fase === group.fase),
-      group.teams,
-      'prediction'
-    );
-    return acc;
-  }, {}), [phase2Games]);
-
   const matchById = useMemo(
     () => new Map(PHASE3_MATCHES.map((match) => [match.id, match])),
     []
   );
-
-  const getPredictedWinnerTeam = useCallback((matchId) => {
-    const prediction = predictions[matchId];
-    if (prediction?.winner === 'A') return prediction.teamA;
-    if (prediction?.winner === 'B') return prediction.teamB;
-    return '';
-  }, [predictions]);
-
-  const getPredictedLoserTeam = useCallback((matchId) => {
-    const prediction = predictions[matchId];
-    if (prediction?.winner === 'A') return prediction.teamB;
-    if (prediction?.winner === 'B') return prediction.teamA;
-    return '';
-  }, [predictions]);
-
-  const getTeamByGroupPosition = useCallback((groupLetter, position) => {
-    const standings = standingsByGroup[`Grupo ${groupLetter}`] || [];
-    return standings[position - 1]?.team || '';
-  }, [standingsByGroup]);
-
-  const resolveSlotOptions = useCallback((slot) => {
-    const groupWinnerMatch = slot.match(/^Vencedor Grupo ([A-L])$/);
-    if (groupWinnerMatch) {
-      const team = getTeamByGroupPosition(groupWinnerMatch[1], 1);
-      return team ? [{ value: team, label: team }] : [];
-    }
-
-    const runnerUpMatch = slot.match(/^2o Grupo ([A-L])$/);
-    if (runnerUpMatch) {
-      const team = getTeamByGroupPosition(runnerUpMatch[1], 2);
-      return team ? [{ value: team, label: team }] : [];
-    }
-
-    const thirdPlaceMatch = slot.match(/^3o Grupo ([A-L/]+)$/);
-    if (thirdPlaceMatch) {
-      return thirdPlaceMatch[1].split('/').map((groupLetter) => {
-        const team = getTeamByGroupPosition(groupLetter, 3);
-        return team ? { value: team, label: `${team} (${groupLetter})` } : null;
-      }).filter(Boolean);
-    }
-
-    const previousWinnerMatch = slot.match(/^Vencedor Jogo (\d+)$/);
-    if (previousWinnerMatch) {
-      const previousMatchId = Number(previousWinnerMatch[1]);
-      const team = getPredictedWinnerTeam(previousMatchId);
-      const previousMatch = matchById.get(previousMatchId);
-      return team ? [{ value: team, label: team }] : [{ value: '', label: `Defina o classificado de ${previousMatch?.date || 'jogo anterior'}` }];
-    }
-
-    const previousLoserMatch = slot.match(/^Perdedor Jogo (\d+)$/);
-    if (previousLoserMatch) {
-      const previousMatchId = Number(previousLoserMatch[1]);
-      const team = getPredictedLoserTeam(previousMatchId);
-      return team ? [{ value: team, label: team }] : [{ value: '', label: 'Defina a semifinal primeiro' }];
-    }
-
-    return [];
-  }, [getPredictedLoserTeam, getPredictedWinnerTeam, getTeamByGroupPosition, matchById]);
 
   const formatSlotLabel = useCallback((slot) => {
     const previousMatch = slot.match(/^(Vencedor|Perdedor) Jogo (\d+)$/);
@@ -144,28 +84,19 @@ export default function Phase3Page() {
       const nextPredictions = PHASE3_MATCHES.reduce((acc, match) => {
         const prediction = { ...normalized[match.id] };
 
-        [
-          { field: 'teamA', options: resolveSlotOptions(match.slotA) },
-          { field: 'teamB', options: resolveSlotOptions(match.slotB) },
-        ].forEach(({ field, options }) => {
-          const validValues = options.map((option) => option.value).filter(Boolean);
+        const knockoutMatch = knockoutById.get(match.id);
+        const fixedTeamA = knockoutMatch?.mandante || '';
+        const fixedTeamB = knockoutMatch?.visitante || '';
 
-          if (validValues.length === 1 && prediction[field] !== validValues[0]) {
-            prediction[field] = validValues[0];
-            changed = true;
-            return;
-          }
+        if (prediction.teamA !== fixedTeamA) {
+          prediction.teamA = fixedTeamA;
+          changed = true;
+        }
 
-          if (prediction[field] && options.length > 0 && validValues.length === 0) {
-            prediction[field] = '';
-            changed = true;
-          }
-
-          if (prediction[field] && validValues.length > 0 && !validValues.includes(prediction[field])) {
-            prediction[field] = '';
-            changed = true;
-          }
-        });
+        if (prediction.teamB !== fixedTeamB) {
+          prediction.teamB = fixedTeamB;
+          changed = true;
+        }
 
         if (prediction.winner === 'A' && !prediction.teamA) {
           prediction.winner = '';
@@ -188,7 +119,7 @@ export default function Phase3Page() {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(nextPredictions));
       return nextPredictions;
     });
-  }, [resolveSlotOptions]);
+  }, [knockoutById]);
 
   const filledMatches = useMemo(
     () => Object.values(predictions).filter(isFilledMatch).length,
@@ -270,12 +201,6 @@ export default function Phase3Page() {
     }
   };
 
-  const handleClear = () => {
-    const cleared = normalizePhase3Predictions({});
-    setPredictions(cleared);
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cleared));
-  };
-
   return (
     <div className="phase3-page">
       <section className="phase3-header">
@@ -321,16 +246,15 @@ export default function Phase3Page() {
         ))}
       </div>
 
-      <section className="phase3-match-grid">
-        {PHASE3_MATCHES.filter((match) => match.round === activeRound).map((match) => {
-          const prediction = predictions[match.id];
-          const official = PHASE3_RESULTS[match.id];
-          const score = calculatePhase3MatchScore(prediction, official);
-          const slotAOptions = resolveSlotOptions(match.slotA);
-          const slotBOptions = resolveSlotOptions(match.slotB);
+      <section className="phase3-scores-wrap">
+        <div className="phase3-match-grid">
+          {PHASE3_MATCHES.filter((match) => match.round === activeRound).map((match) => {
+            const prediction = predictions[match.id];
+            const official = PHASE3_RESULTS[match.id];
+            const score = calculatePhase3MatchScore(prediction, official);
 
-          return (
-            <article className="phase3-match-card" key={match.id}>
+            return (
+              <article className="phase3-match-card" key={match.id}>
               <header className="phase3-match-header">
                 <div>
                   <span className="phase3-match-kicker">{match.date}</span>
@@ -341,54 +265,36 @@ export default function Phase3Page() {
                 </span>
               </header>
 
-              <div className="phase3-team-row">
-                <label>
-                  <span>{formatSlotLabel(match.slotA)}</span>
-                  <select
-                    value={prediction.teamA}
-                    onChange={(event) => updatePrediction(match.id, 'teamA', event.target.value)}
-                  >
-                    <option value="">Selecione</option>
-                    {slotAOptions.map((option) => (
-                      <option key={option.value || option.label} value={option.value} disabled={!option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <input
-                  className="phase3-score-input"
-                  type="number"
-                  min="0"
-                  value={prediction.scoreA}
-                  onChange={(event) => updatePrediction(match.id, 'scoreA', event.target.value)}
-                  aria-label={`Placar de ${prediction.teamA || match.slotA}`}
-                />
-              </div>
+              <div className="phase3-score-box">
+                <div className="phase3-team-row">
+                  <label>
+                    <span>{formatSlotLabel(match.slotA)}</span>
+                    <div className="phase3-team-value">{prediction.teamA || 'A definir'}</div>
+                  </label>
+                  <input
+                    className="phase3-score-input"
+                    type="number"
+                    min="0"
+                    value={prediction.scoreA}
+                    onChange={(event) => updatePrediction(match.id, 'scoreA', event.target.value)}
+                    aria-label={`Placar de ${prediction.teamA || match.slotA}`}
+                  />
+                </div>
 
-              <div className="phase3-team-row">
-                <label>
-                  <span>{formatSlotLabel(match.slotB)}</span>
-                  <select
-                    value={prediction.teamB}
-                    onChange={(event) => updatePrediction(match.id, 'teamB', event.target.value)}
-                  >
-                    <option value="">Selecione</option>
-                    {slotBOptions.map((option) => (
-                      <option key={option.value || option.label} value={option.value} disabled={!option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <input
-                  className="phase3-score-input"
-                  type="number"
-                  min="0"
-                  value={prediction.scoreB}
-                  onChange={(event) => updatePrediction(match.id, 'scoreB', event.target.value)}
-                  aria-label={`Placar de ${prediction.teamB || match.slotB}`}
-                />
+                <div className="phase3-team-row">
+                  <label>
+                    <span>{formatSlotLabel(match.slotB)}</span>
+                    <div className="phase3-team-value">{prediction.teamB || 'A definir'}</div>
+                  </label>
+                  <input
+                    className="phase3-score-input"
+                    type="number"
+                    min="0"
+                    value={prediction.scoreB}
+                    onChange={(event) => updatePrediction(match.id, 'scoreB', event.target.value)}
+                    aria-label={`Placar de ${prediction.teamB || match.slotB}`}
+                  />
+                </div>
               </div>
 
               <div className="phase3-winner-group">
@@ -417,17 +323,15 @@ export default function Phase3Page() {
                   Classificado {score.classified ? '+4' : '+0'} | Placar {score.exactScore ? '+3' : '+0'} | Resultado {score.result ? '+1' : '+0'}
                 </span>
               </footer>
-            </article>
-          );
-        })}
+              </article>
+            );
+          })}
+        </div>
       </section>
 
       <div className="phase3-actions">
         <button type="button" className="btn-save" onClick={handleSave} disabled={isSaving}>
-          {isSaving ? 'Salvando...' : 'Salvar Fase 3'}
-        </button>
-        <button type="button" className="btn-clear" onClick={handleClear}>
-          Limpar Tudo
+          {isSaving ? 'Salvando...' : 'Salvar palpites'}
         </button>
       </div>
     </div>

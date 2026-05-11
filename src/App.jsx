@@ -6,6 +6,7 @@ import PredictionsPage from './pages/Predictions/Predictions';
 import LeaderboardPage from './pages/Leaderboard/Leaderboard';
 import Phase1Page from './pages/Phases/Phase1';
 import Phase3Page from './pages/Phases/Phase3';
+import MataMataPage from './pages/MataMata/MataMata';
 import { ToastProvider } from './context/ToastContext.jsx';
 import './App.scss';
 
@@ -22,6 +23,7 @@ function App() {
               <Route path="/phase1" element={<Phase1Page />} />
               <Route path="/phase2" element={<PredictionsPage />} />
               <Route path="/phase3" element={<Phase3Page />} />
+              <Route path="/mata-mata" element={<MataMataPage />} />
               <Route path="/predictions" element={<Navigate to="/phase2" replace />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />
             </Routes>
