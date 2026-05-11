@@ -24,7 +24,7 @@ export default function PredictionsPage() {
             <span className="stat-label">Cravadas</span>
           </div>
           <div className="stat-card">
-            <span className="stat-value">{predictions}/{games.length}</span>
+            <span className="stat-value stat-value-compact">{predictions}/{games.length}</span>
             <span className="stat-label">Preenchidos</span>
           </div>
           <div className="stat-card">
