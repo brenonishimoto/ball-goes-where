@@ -1,4 +1,5 @@
 import { useGames } from '../../hooks/useGames';
+import { useState } from 'react';
 import Card from '../../components/Card/Card';
 import GameInput from '../../components/GameInput/GameInput';
 import { GROUPS, ROUNDS, gameService } from '../../services/gameService';
@@ -27,9 +28,19 @@ export default function CupTablePage({
   const save = externalSave ?? hookSave;
   const clearData = externalClearData ?? hookClearData;
   const { pushToast } = useToast();
+  const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
+    setSaving(true);
     try {
+      // Feedback imediato: salva localmente e notifica o usuário
+      try {
+        gameService.saveGames(games, gameService.getGameStorageKey('guest'));
+      } catch {
+        // ignore local save failures here
+      }
+      pushToast({ type: 'success', message: 'Palpites salvos localmente.' });
+
       const result = await save();
 
       if (result?.status === 'auth-required') {
@@ -40,15 +51,14 @@ export default function CupTablePage({
         return;
       }
 
-      pushToast({
-        type: 'success',
-        message: 'Palpites salvos com sucesso.',
-      });
+      pushToast({ type: 'success', message: 'Palpites sincronizados com o servidor.' });
     } catch {
       pushToast({
         type: 'error',
         message: 'Não foi possível salvar os palpites. Tente novamente.',
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -164,8 +174,8 @@ export default function CupTablePage({
 
               {editable && (
                 <div className="phase-actions">
-                  <button className="btn btn-secondary" onClick={clearData}>Limpar palpites</button>
-                  <button className="btn btn-success" onClick={handleSave}>Salvar palpites</button>
+                  <button type="button" className="btn btn-danger" onClick={clearData} disabled={saving}>Limpar palpites</button>
+                  <button type="button" className="btn btn-success" onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : 'Salvar palpites'}</button>
                 </div>
               )}
             </div>
