@@ -38,40 +38,6 @@ O projeto tem:
 - npm ou yarn
 - Banco Neon configurado
 
-## Variaveis de ambiente
-
-Crie um arquivo .env na raiz:
-
-```env
-DATABASE_URL=postgresql://user:password@host/database?sslmode=require
-AUTH_SECRET=troque-por-um-segredo-forte
-```
-
-Observacoes:
-
-- Em desenvolvimento, o middleware local usa DATABASE_URL.
-- Em producao (funcoes em api), o backend tambem aceita NEON_DATABASE_URL, NEON_URL, POSTGRES_URL e POSTGRES_PRISMA_URL.
-- Recomenda-se sempre definir DATABASE_URL e AUTH_SECRET.
-
-## Banco de dados
-
-Script principal:
-
-- sql/neon-users.sql
-
-Esse script cria:
-
-- schema neon_auth
-- tabela neon_auth."user"
-- tabela public.user_predictions
-- tabela public.user_scores
-- indices e trigger de updatedAt
-
-Script auxiliar:
-
-- sql/populate-user-scores.sql
-
-Usado para popular a tabela de score para usuarios que ainda nao possuem entrada.
 
 ## Como rodar localmente
 
