@@ -1,58 +1,151 @@
-# React + Vite
+# Ball Goes Where
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicacao web de bolao da Copa do Mundo 2026, com autenticacao, palpites por usuario e ranking em tempo real.
 
- - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Visao geral
 
-## Neon Auth (usuario e senha)
+O projeto tem:
 
-O projeto usa uma API local no Vite para login/cadastro com persistencia na tabela `neon_auth."user"`.
+- Frontend em React + Vite
+- API local no modo desenvolvimento via middleware no Vite
+- Funcoes serverless em producao na pasta api para deploy na Vercel
+- Persistencia no Neon Postgres
+- Calculo de pontuacao e leaderboard por usuario
 
-### Variaveis de ambiente
+## Funcionalidades
 
-Defina no arquivo `.env`:
+- Cadastro e login com token (Bearer)
+- Sessao do usuario autenticado
+- Salvamento de palpites por usuario
+- Tabela de classificacao por grupos
+- Pagina de palpites
+- Ranking (leaderboard) com pontuacao
+- Recalculo global do ranking
 
-```bash
+## Tecnologias
+
+- React 19
+- React Router DOM 7
+- Vite 7
+- Sass
+- ESLint 9
+- Neon Postgres
+- Vercel Functions (em producao)
+
+## Requisitos
+
+- Node.js 20+
+- npm ou yarn
+- Banco Neon configurado
+
+## Variaveis de ambiente
+
+Crie um arquivo .env na raiz:
+
+```env
 DATABASE_URL=postgresql://user:password@host/database?sslmode=require
 AUTH_SECRET=troque-por-um-segredo-forte
 ```
 
-No Vercel, configure as mesmas variaveis em Project Settings > Environment Variables.
-O backend aceita `DATABASE_URL`, `NEON_DATABASE_URL` e `NEON_URL`, desde que a URL aponte para `*.neon.tech` ou `*.neon.dev`.
+Observacoes:
 
-### Estrutura SQL
+- Em desenvolvimento, o middleware local usa DATABASE_URL.
+- Em producao (funcoes em api), o backend tambem aceita NEON_DATABASE_URL, NEON_URL, POSTGRES_URL e POSTGRES_PRISMA_URL.
+- Recomenda-se sempre definir DATABASE_URL e AUTH_SECRET.
 
-O arquivo `sql/neon-users.sql` cria automaticamente:
+## Banco de dados
 
-- schema `neon_auth`
-- tabela `neon_auth."user"`
-- colunas `username`, `password_hash`, `password_salt`
+Script principal:
 
-As migrations sao aplicadas automaticamente ao subir `vite` em modo dev.
+- sql/neon-users.sql
 
-### Endpoints locais
+Esse script cria:
 
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `GET /api/auth/me`
+- schema neon_auth
+- tabela neon_auth."user"
+- tabela public.user_predictions
+- tabela public.user_scores
+- indices e trigger de updatedAt
 
-Em producao no Vercel, esses caminhos sao atendidos pelas funcoes em `api/auth/`.
+Script auxiliar:
 
-### Rodando o projeto
+- sql/populate-user-scores.sql
+
+Usado para popular a tabela de score para usuarios que ainda nao possuem entrada.
+
+## Como rodar localmente
+
+1. Instale dependencias:
 
 ```bash
-yarn install
-yarn dev
+npm install
 ```
 
-### Outros comandos
+2. Inicie em modo desenvolvimento:
 
 ```bash
-yarn build
-yarn lint
+npm run dev
 ```
 
-## Expanding the ESLint configuration
+3. Abra no navegador o endereco mostrado no terminal (normalmente http://localhost:5173).
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Importante:
+
+- Ao iniciar o Vite em dev, o projeto tenta aplicar automaticamente o SQL de sql/neon-users.sql (best-effort).
+- Existe tambem um endpoint local de suporte para migracao: POST /api/_migrate.
+
+## Scripts disponiveis
+
+- npm run dev: inicia o Vite com API local
+- npm run build: gera build de producao
+- npm run preview: sobe preview local da build
+- npm run lint: executa ESLint
+
+## Endpoints da API
+
+### Autenticacao
+
+- POST /api/auth/register
+- POST /api/auth/login
+- GET /api/auth/me
+
+### Palpites
+
+- GET /api/predictions/me
+- PUT /api/predictions/me
+
+### Ranking
+
+- GET /api/ranking/leaderboard
+- GET /api/ranking/scores/me
+- PUT /api/ranking/scores/me
+- POST /api/ranking/refresh
+
+## Regras de pontuacao
+
+Para cada jogo com placar oficial definido:
+
+- Acertou resultado (vitoria, empate ou derrota): 3 pontos
+- Acertou placar exato: +2 pontos
+- Maximo por jogo: 5 pontos
+
+Atualmente o totalScore e o phase02 usam a mesma regra.
+
+## Estrutura de alto nivel
+
+- src: frontend (paginas, componentes, hooks, contexto e servicos)
+- api: funcoes serverless para producao
+- sql: scripts de banco
+- public: arquivos estaticos
+
+## Deploy
+
+O projeto foi estruturado para deploy na Vercel:
+
+- Frontend servido pela build do Vite
+- Rotas /api atendidas por funcoes em api
+- Variaveis de ambiente configuradas no painel da Vercel
+
+## Licenca
+
+MIT (arquivo LICENSE).
