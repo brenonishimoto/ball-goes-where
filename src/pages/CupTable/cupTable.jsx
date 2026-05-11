@@ -2,6 +2,7 @@ import { useGames } from '../../hooks/useGames';
 import { useState } from 'react';
 import Card from '../../components/Card/Card';
 import GameInput from '../../components/GameInput/GameInput';
+import Flag from '../../components/Flag/Flag';
 import { GROUPS, ROUNDS, gameService } from '../../services/gameService';
 import { computeGroupStandings } from '../../utils/helpers';
 import { useToast } from '../../context/ToastContext';
@@ -115,7 +116,7 @@ export default function CupTablePage({
                         editable ? 'prediction' : 'official',
                       ).map((row) => (
                         <tr key={row.team}>
-                          <td>{row.team}</td>
+                          <td><span className="team-with-flag"><Flag country={row.team} size="md" /> {row.team}</span></td>
                           <td>{row.Pts}</td>
                           <td>{row.PJ}</td>
                           <td>{row.V}</td>
@@ -149,8 +150,8 @@ export default function CupTablePage({
                                 <span>{game.hora}</span>
                               </div>
                               <div className="match-line">
-                                <div className="team-col team-home">
-                                  <span>{game.mandante}</span>
+                                <div className="team-col team-home" title={game.mandante}>
+                                  <Flag country={game.mandante} size="lg" />
                                 </div>
                                 <div className="score-col">
                                   {game.officialM !== null && game.officialV !== null ? (
@@ -159,8 +160,8 @@ export default function CupTablePage({
                                     <span className="score-empty">-</span>
                                   )}
                                 </div>
-                                <div className="team-col team-away">
-                                  <span>{game.visitante}</span>
+                                <div className="team-col team-away" title={game.visitante}>
+                                  <Flag country={game.visitante} size="lg" />
                                 </div>
                               </div>
                             </div>

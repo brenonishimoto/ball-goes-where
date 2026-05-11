@@ -1,5 +1,6 @@
 import { useGames } from '../../hooks/useGames';
 import { calculateTotalPoints, countPredictions } from '../../utils/helpers';
+import Flag from '../../components/Flag/Flag';
 import { GROUPS } from '../../services/gameService';
 import './homepage.scss';
 
@@ -42,7 +43,11 @@ export default function HomePage() {
         {GROUPS.map((group) => (
           <div key={group.fase} className="group-chip">
             <strong>{group.fase}</strong>
-            <span>{group.teams.join(' · ')}</span>
+            <span className="teams-with-flags">
+              {group.teams.map((team) => (
+                <Flag key={team} country={team} size="md" />
+              ))}
+            </span>
           </div>
         ))}
       </section>

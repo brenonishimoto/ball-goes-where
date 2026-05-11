@@ -1,4 +1,5 @@
 import './GameInput.scss';
+import Flag from '../Flag/Flag';
 import { scoringService } from '../../services/scoringService';
 
 export default function GameInput({
@@ -33,8 +34,8 @@ export default function GameInput({
 
       <div className="game-content">
         <div className="teams-section">
-          <div className="team">
-            <span className="team-name">{game.mandante}</span>
+          <div className="team" title={game.mandante}>
+            <Flag country={game.mandante} size="lg" />
           </div>
 
           <div className="score-inputs">
@@ -59,8 +60,8 @@ export default function GameInput({
             />
           </div>
 
-          <div className="team">
-            <span className="team-name">{game.visitante}</span>
+          <div className="team" title={game.visitante}>
+            <Flag country={game.visitante} size="lg" />
           </div>
         </div>
 

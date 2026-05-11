@@ -20,15 +20,11 @@ export default function PredictionsPage() {
 
         <div className="stats-grid">
           <div className="stat-card">
-            <span className="stat-value">{GROUPS.length}</span>
-            <span className="stat-label">Grupos</span>
-          </div>
-          <div className="stat-card">
-            <span className="stat-value">{games.length}</span>
-            <span className="stat-label">Jogos</span>
-          </div>
-          <div className="stat-card">
             <span className="stat-value">{predictions}</span>
+            <span className="stat-label">Cravadas</span>
+          </div>
+          <div className="stat-card">
+            <span className="stat-value">{predictions}/{games.length}</span>
             <span className="stat-label">Preenchidos</span>
           </div>
           <div className="stat-card">
