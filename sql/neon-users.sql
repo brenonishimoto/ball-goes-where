@@ -23,7 +23,8 @@ create schema if not exists public;
 
 create table if not exists public.user_predictions (
   user_id uuid primary key references neon_auth."user"(id) on delete cascade,
-  games jsonb not null default '[]'::jsonb,
+  phase2_predictions jsonb not null default '[]'::jsonb,
+  phase1_predictions jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp
 );
@@ -33,7 +34,8 @@ create index if not exists user_predictions_updated_at_idx on public.user_predic
 create table if not exists public.user_scores (
   user_id uuid primary key references neon_auth."user"(id) on delete cascade,
   total_score integer not null default 0,
-  phase02_score integer not null default 0,
+  phase1_score integer not null default 0,
+  phase2_score integer not null default 0,
   calculated_at timestamptz not null default current_timestamp,
   updated_at timestamptz not null default current_timestamp
 );

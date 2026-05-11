@@ -1,9 +1,10 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header/header';
 import HomePage from './pages/Homepage/homepage';
 import CupTablePage from './pages/CupTable/cupTable';
 import PredictionsPage from './pages/Predictions/Predictions';
 import LeaderboardPage from './pages/Leaderboard/Leaderboard';
+import Phase1Page from './pages/Phases/Phase1';
 import { ToastProvider } from './context/ToastContext.jsx';
 import './App.scss';
 
@@ -17,7 +18,9 @@ function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/table" element={<CupTablePage />} />
-              <Route path="/predictions" element={<PredictionsPage />} />
+              <Route path="/phase1" element={<Phase1Page />} />
+              <Route path="/phase2" element={<PredictionsPage />} />
+              <Route path="/predictions" element={<Navigate to="/phase2" replace />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />
             </Routes>
           </main>

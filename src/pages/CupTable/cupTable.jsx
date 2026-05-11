@@ -40,23 +40,23 @@ export default function CupTablePage({
       } catch {
         // ignore local save failures here
       }
-      pushToast({ type: 'success', message: 'Palpites salvos localmente.' });
+      pushToast({ type: 'success', message: 'Fase 2 salva localmente.' });
 
       const result = await save();
 
       if (result?.status === 'auth-required') {
         pushToast({
           type: 'warning',
-          message: 'Faça login para salvar seus palpites no banco.',
+          message: 'Faça login para salvar a Fase 2 no banco.',
         });
         return;
       }
 
-      pushToast({ type: 'success', message: 'Palpites sincronizados com o servidor.' });
+      pushToast({ type: 'success', message: 'Fase 2 sincronizada com o servidor.' });
     } catch {
       pushToast({
         type: 'error',
-        message: 'Não foi possível salvar os palpites. Tente novamente.',
+        message: 'Não foi possível salvar a Fase 2. Tente novamente.',
       });
     } finally {
       setSaving(false);
@@ -175,8 +175,8 @@ export default function CupTablePage({
 
               {editable && (
                 <div className="phase-actions">
-                  <button type="button" className="btn btn-danger" onClick={clearData} disabled={saving}>Limpar palpites</button>
-                  <button type="button" className="btn btn-success" onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : 'Salvar palpites'}</button>
+                  <button type="button" className="btn btn-danger" onClick={clearData} disabled={saving}>Limpar Fase 2</button>
+                  <button type="button" className="btn btn-success" onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : 'Salvar Fase 2'}</button>
                 </div>
               )}
             </div>

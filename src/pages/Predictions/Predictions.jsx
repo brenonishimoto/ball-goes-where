@@ -14,7 +14,7 @@ export default function PredictionsPage() {
       <section className="predictions-header">
         <div className="hero-copy">
           <span className="eyebrow">Copa do Mundo 2026</span>
-          <h1>Área de Palpites</h1>
+          <h1>Fase 2</h1>
           <p>Preencha apenas os placares e acompanhe sua pontuação em tempo real.</p>
         </div>
 

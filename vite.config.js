@@ -181,6 +181,26 @@ const normalizeGames = (value) => {
   return []
 }
 
+const normalizePredictions = (value) => {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const predictionValues = { ...value }
+    delete predictionValues[0]
+    delete predictionValues[1]
+    return predictionValues
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      const parsed = JSON.parse(value)
+      return normalizePredictions(parsed)
+    } catch {
+      return {}
+    }
+  }
+
+  return {}
+}
+
 const queryNeon = async (databaseUrl, query, params = []) => {
   const cleanDatabaseUrl = String(databaseUrl || '').replace(/^['\"]|['\"]$/g, '')
 
@@ -343,8 +363,8 @@ const neonApiPlugin = (env) => ({
               await queryNeon(
                 databaseUrl,
                 `
-                INSERT INTO public.user_scores (user_id, total_score, phase02_score, calculated_at, updated_at)
-                VALUES ($1, 0, 0, now(), now())
+                INSERT INTO public.user_scores (user_id, total_score, phase1_score, phase2_score, calculated_at, updated_at)
+                VALUES ($1, 0, 0, 0, now(), now())
                 ON CONFLICT (user_id) DO NOTHING
               `,
                 [row.id]
@@ -505,7 +525,7 @@ const neonApiPlugin = (env) => ({
             const rows = await queryNeon(
               databaseUrl,
               `
-              SELECT games
+              SELECT phase2_predictions
               FROM public.user_predictions
               WHERE user_id = $1
               LIMIT 1
@@ -513,7 +533,7 @@ const neonApiPlugin = (env) => ({
               [payload.sub]
             )
 
-            sendJson(200, { games: rows.length ? rows[0].games ?? [] : [] })
+            sendJson(200, { games: rows.length ? rows[0].phase2_predictions ?? [] : [] })
             return
           }
 
@@ -524,17 +544,17 @@ const neonApiPlugin = (env) => ({
             const rows = await queryNeon(
               databaseUrl,
               `
-              INSERT INTO public.user_predictions (user_id, games, updated_at)
+              INSERT INTO public.user_predictions (user_id, phase2_predictions, updated_at)
               VALUES ($1, $2::jsonb, now())
               ON CONFLICT (user_id) DO UPDATE
-              SET games = EXCLUDED.games,
+              SET phase2_predictions = EXCLUDED.phase2_predictions,
                   updated_at = now()
-              RETURNING games
+              RETURNING phase2_predictions
             `,
               [payload.sub, JSON.stringify(games)]
             )
 
-            sendJson(200, { games: rows.length ? rows[0].games ?? games : games })
+            sendJson(200, { games: rows.length ? rows[0].phase2_predictions ?? games : games })
             return
           }
 
@@ -543,6 +563,87 @@ const neonApiPlugin = (env) => ({
         } catch (error) {
           sendJson(500, {
             error: error instanceof Error ? error.message : 'Erro ao consultar palpites.',
+          })
+          return
+        }
+      }
+
+      if (requestUrl.pathname === '/api/predictions/phase1/me') {
+        const sendJson = (statusCode, payload) => {
+          response.statusCode = statusCode
+          response.setHeader('Content-Type', 'application/json; charset=utf-8')
+          response.end(JSON.stringify(payload))
+        }
+
+        if (request.method === 'OPTIONS') {
+          response.statusCode = 204
+          response.setHeader('Access-Control-Allow-Origin', '*')
+          response.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+          response.setHeader('Access-Control-Allow-Methods', 'GET,PUT,OPTIONS')
+          response.end()
+          return
+        }
+
+        const databaseUrl = env.DATABASE_URL || process.env.DATABASE_URL
+
+        if (!databaseUrl) {
+          sendJson(500, { error: 'DATABASE_URL não configurado.' })
+          return
+        }
+
+        const authSecret = env.AUTH_SECRET || process.env.AUTH_SECRET || 'dev-auth-secret-change-this'
+
+        try {
+          const bearerToken = getBearerToken(request)
+          const payload = verifyAuthToken(bearerToken, authSecret)
+
+          if (!payload?.sub) {
+            sendJson(401, { error: 'Sessão inválida ou expirada.' })
+            return
+          }
+
+          if (request.method === 'GET') {
+            const rows = await queryNeon(
+              databaseUrl,
+              `
+              SELECT phase1_predictions
+              FROM public.user_predictions
+              WHERE user_id = $1
+              LIMIT 1
+            `,
+              [payload.sub]
+            )
+
+            const phase1_predictions = rows.length ? normalizePredictions(rows[0].phase1_predictions) : {}
+            sendJson(200, { phase1_predictions })
+            return
+          }
+
+          if (request.method === 'PUT') {
+            const body = await readJsonBody(request)
+            const phase1_predictions = normalizePredictions(body.phase1_predictions)
+
+            await queryNeon(
+              databaseUrl,
+              `
+              INSERT INTO public.user_predictions (user_id, phase1_predictions, updated_at)
+              VALUES ($1, $2::jsonb, now())
+              ON CONFLICT (user_id) DO UPDATE
+              SET phase1_predictions = EXCLUDED.phase1_predictions,
+                  updated_at = now()
+            `,
+              [payload.sub, JSON.stringify(phase1_predictions)]
+            )
+
+            sendJson(200, { phase1_predictions })
+            return
+          }
+
+          sendJson(405, { error: 'Método não permitido.' })
+          return
+        } catch (error) {
+          sendJson(500, {
+            error: error instanceof Error ? error.message : 'Erro ao consultar palpites da Fase 1.',
           })
           return
         }
@@ -660,13 +761,13 @@ const neonApiPlugin = (env) => ({
           const predictions = await queryNeon(
             databaseUrl,
             `
-            SELECT user_id, games
+            SELECT user_id, phase2_predictions
             FROM public.user_predictions
           `
           )
 
           const predictionsByUserId = new Map(
-            predictions.map((row) => [row.user_id, normalizeGames(row.games)])
+            predictions.map((row) => [row.user_id, normalizeGames(row.phase2_predictions)])
           )
 
           let refreshed = 0
@@ -689,15 +790,21 @@ const neonApiPlugin = (env) => ({
             await queryNeon(
               databaseUrl,
               `
-              INSERT INTO public.user_scores (user_id, total_score, phase02_score, calculated_at, updated_at)
-              VALUES ($1, $2, $3, now(), now())
+              INSERT INTO public.user_scores (user_id, total_score, phase1_score, phase2_score, calculated_at, updated_at)
+              VALUES ($1, $2, $3, $4, now(), now())
               ON CONFLICT (user_id) DO UPDATE
               SET total_score = EXCLUDED.total_score,
-                  phase02_score = EXCLUDED.phase02_score,
+                  phase1_score = EXCLUDED.phase1_score,
+                  phase2_score = EXCLUDED.phase2_score,
                   calculated_at = now(),
                   updated_at = now()
             `,
-              [user.id, Number(scorePayload.totalScore) || 0, Number(scorePayload.phase02) || 0]
+              [
+                user.id,
+                Number(scorePayload.totalScore) || 0,
+                Number(scorePayload.phase1Score) || 0,
+                Number(scorePayload.phase2Score) || 0,
+              ]
             )
 
             refreshed += 1
@@ -750,25 +857,38 @@ const neonApiPlugin = (env) => ({
           if (request.method === 'PUT') {
             const body = await readJsonBody(request)
             const totalScore = Number(body.totalScore || 0)
-            const phase02Score = Number(body.phase02 || 0)
+            const phase1Score = Number(body.phase1Score ?? body.phase1 ?? 0)
+            const phase2Score = Number(body.phase2Score ?? body.phase02 ?? body.phase2 ?? 0)
 
             const rows = await queryNeon(
               databaseUrl,
               `
-              INSERT INTO public.user_scores (user_id, total_score, phase02_score, calculated_at, updated_at)
-              VALUES ($1, $2, $3, now(), now())
+              INSERT INTO public.user_scores (user_id, total_score, phase1_score, phase2_score, calculated_at, updated_at)
+              VALUES ($1, $2, $3, $4, now(), now())
               ON CONFLICT (user_id) DO UPDATE
               SET total_score = EXCLUDED.total_score,
-                  phase02_score = EXCLUDED.phase02_score,
+                  phase1_score = EXCLUDED.phase1_score,
+                  phase2_score = EXCLUDED.phase2_score,
                   updated_at = now()
-              RETURNING total_score, phase02_score, calculated_at, updated_at
+              RETURNING total_score, phase1_score, phase2_score, calculated_at, updated_at
             `,
-              [payload.sub, totalScore, phase02Score]
+              [payload.sub, totalScore, phase1Score, phase2Score]
             )
 
-            const savedScore = rows.length ? rows[0] : { total_score: totalScore, phase02_score: phase02Score }
+            const savedScore = rows.length
+              ? rows[0]
+              : {
+                  total_score: totalScore,
+                  phase1_score: phase1Score,
+                  phase2_score: phase2Score,
+                }
 
-            sendJson(200, { success: true, total_score: savedScore.total_score, phase02_score: savedScore.phase02_score })
+            sendJson(200, {
+              success: true,
+              total_score: savedScore.total_score,
+              phase1_score: savedScore.phase1_score,
+              phase2_score: savedScore.phase2_score,
+            })
             return
           }
 

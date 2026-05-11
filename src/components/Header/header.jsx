@@ -57,7 +57,8 @@ export default function Header() {
           <nav className="header-nav">
             <Link to="/" className="nav-link">Home</Link>
             <Link to="/table" className="nav-link">Tabela</Link>
-            <Link to="/predictions" className="nav-link">Palpites</Link>
+            <Link to="/phase1" className="nav-link">Fase 1</Link>
+            <Link to="/phase2" className="nav-link">Fase 2</Link>
             <Link to="/leaderboard" className="nav-link">Ranking</Link>
             <button
               type="button"

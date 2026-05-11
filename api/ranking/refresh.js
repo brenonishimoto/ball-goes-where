@@ -126,13 +126,16 @@ export default async function handler(request, response) {
     const predictions = await queryNeon(
       databaseUrl,
       `
-      SELECT user_id, games, updated_at
+      SELECT user_id, phase2_predictions, updated_at
       FROM public.user_predictions
     `
     )
 
     const predictionsByUserId = new Map(
-      predictions.map((row) => [row.user_id, { games: normalizeGames(row.games), updatedAt: row.updated_at }])
+      predictions.map((row) => [
+        row.user_id,
+        { games: normalizeGames(row.phase2_predictions), updatedAt: row.updated_at },
+      ])
     )
 
     const updates = []
@@ -145,21 +148,28 @@ export default async function handler(request, response) {
       await queryNeon(
         databaseUrl,
         `
-        INSERT INTO public.user_scores (user_id, total_score, phase02_score, calculated_at, updated_at)
-        VALUES ($1, $2, $3, now(), now())
+        INSERT INTO public.user_scores (user_id, total_score, phase1_score, phase2_score, calculated_at, updated_at)
+        VALUES ($1, $2, $3, $4, now(), now())
         ON CONFLICT (user_id) DO UPDATE
         SET total_score = EXCLUDED.total_score,
-            phase02_score = EXCLUDED.phase02_score,
+            phase1_score = EXCLUDED.phase1_score,
+            phase2_score = EXCLUDED.phase2_score,
             calculated_at = now(),
             updated_at = now()
       `,
-        [user.id, Number(scorePayload.totalScore) || 0, Number(scorePayload.phase02) || 0]
+        [
+          user.id,
+          Number(scorePayload.totalScore) || 0,
+          Number(scorePayload.phase1Score) || 0,
+          Number(scorePayload.phase2Score ?? 0) || 0,
+        ]
       )
 
       updates.push({
         userId: user.id,
         totalScore: Number(scorePayload.totalScore) || 0,
-        phase02Score: Number(scorePayload.phase02) || 0,
+        phase1Score: Number(scorePayload.phase1Score) || 0,
+        phase2Score: Number(scorePayload.phase2Score) || 0,
         hasPredictions: Boolean(predictionRow),
       })
     }

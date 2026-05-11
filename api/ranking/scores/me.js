@@ -79,7 +79,7 @@ export default async function handler(request, response) {
       const rows = await queryNeon(
         databaseUrl,
         `
-        SELECT total_score, phase02_score, calculated_at, updated_at
+        SELECT total_score, phase1_score, phase2_score, calculated_at, updated_at
         FROM public.user_scores
         WHERE user_id = $1
         LIMIT 1
@@ -89,7 +89,7 @@ export default async function handler(request, response) {
 
       const score = rows.length
         ? rows[0]
-        : { total_score: 0, phase02_score: 0, calculated_at: null, updated_at: null }
+        : { total_score: 0, phase1_score: 0, phase2_score: 0, calculated_at: null, updated_at: null }
 
       sendJson(response, 200, score)
       return
@@ -97,23 +97,27 @@ export default async function handler(request, response) {
 
     const body = await readJsonBody(request)
     const totalScore = Number(body.totalScore) || 0
-    const phase02Score = Number(body.phase02) || 0
+    const phase1Score = Number(body.phase1Score ?? body.phase1 ?? 0) || 0
+    const phase2Score = Number(body.phase2Score ?? body.phase2 ?? 0) || 0
 
     const rows = await queryNeon(
       databaseUrl,
       `
-      INSERT INTO public.user_scores (user_id, total_score, phase02_score, calculated_at, updated_at)
-      VALUES ($1, $2, $3, now(), now())
+      INSERT INTO public.user_scores (user_id, total_score, phase1_score, phase2_score, calculated_at, updated_at)
+      VALUES ($1, $2, $3, $4, now(), now())
       ON CONFLICT (user_id) DO UPDATE
       SET total_score = EXCLUDED.total_score,
-          phase02_score = EXCLUDED.phase02_score,
+          phase1_score = EXCLUDED.phase1_score,
+          phase2_score = EXCLUDED.phase2_score,
           updated_at = now()
-      RETURNING total_score, phase02_score, calculated_at, updated_at
+      RETURNING total_score, phase1_score, phase2_score, calculated_at, updated_at
     `,
-      [payload.sub, totalScore, phase02Score]
+      [payload.sub, totalScore, phase1Score, phase2Score]
     )
 
-    const savedScore = rows.length ? rows[0] : { total_score: totalScore, phase02_score: phase02Score }
+    const savedScore = rows.length
+      ? rows[0]
+      : { total_score: totalScore, phase1_score: phase1Score, phase2_score: phase2Score }
 
     sendJson(response, 200, savedScore)
   } catch (error) {

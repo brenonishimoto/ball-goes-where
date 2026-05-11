@@ -59,10 +59,16 @@ const requestJson = async (path, { method = 'GET', body, token } = {}) => {
 
 export const rankingService = {
   async updateMyScore({ token, score }) {
+    const normalizedScore = {
+      totalScore: Number(score?.totalScore) || 0,
+      phase1Score: Number(score?.phase1Score ?? score?.phase1 ?? 0) || 0,
+      phase2Score: Number(score?.phase2Score ?? score?.phase2 ?? 0) || 0,
+    };
+
     const data = await requestJson('/scores/me', {
       method: 'PUT',
       token,
-      body: score,
+      body: normalizedScore,
     });
 
     return data;

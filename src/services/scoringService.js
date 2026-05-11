@@ -55,9 +55,12 @@ export const scoringService = {
 
   // Calcula score para envio ao backend
   calculateScorePayload(games) {
+    const phase2Score = calculateTotalScore(games);
+
     return {
-      totalScore: calculateTotalScore(games),
-      phase02: calculateTotalScore(games), // FASE 02 é o único cálculo por enquanto
+      totalScore: phase2Score,
+      phase1Score: 0,
+      phase2Score,
     };
   },
 };

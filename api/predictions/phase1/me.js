@@ -6,7 +6,6 @@ import {
   resolveDatabaseUrl,
   verifyAuthToken,
 } from '../../src/server/auth.js'
-import { scoringService } from '../../src/services/scoringService.js'
 
 export const config = {
   runtime: 'nodejs',
@@ -30,27 +29,30 @@ const getBearerToken = (request) => {
   return rawHeader.slice(7).trim()
 }
 
-const normalizeGames = (value) => {
-  if (Array.isArray(value)) {
-    return value
+const normalizePredictions = (value) => {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const predictionValues = { ...value }
+    delete predictionValues[0]
+    delete predictionValues[1]
+    return predictionValues
   }
 
   if (typeof value === 'string' && value.trim()) {
     try {
       const parsed = JSON.parse(value)
-      return Array.isArray(parsed) ? parsed : []
+      return normalizePredictions(parsed)
     } catch {
-      return []
+      return {}
     }
   }
 
-  return []
+  return {}
 }
 
 export default async function handler(request, response) {
   const requestId = makeRequestId()
   const startedAt = Date.now()
-  const route = 'predictions.me'
+  const route = 'predictions.phase1.me'
 
   if (request.method === 'OPTIONS') {
     response.statusCode = 204
@@ -74,7 +76,7 @@ export default async function handler(request, response) {
       method: request.method,
     })
     sendJson(response, 500, {
-      error: 'URL do banco não configurada. Defina DATABASE_URL, NEON_DATABASE_URL, NEON_URL, POSTGRES_URL ou POSTGRES_PRISMA_URL no Vercel.',
+      error: 'URL do banco não configurada.',
     })
     return
   }
@@ -97,7 +99,7 @@ export default async function handler(request, response) {
       const rows = await queryNeon(
         databaseUrl,
         `
-        SELECT phase2_predictions
+        SELECT phase1_predictions
         FROM public.user_predictions
         WHERE user_id = $1
         LIMIT 1
@@ -105,66 +107,56 @@ export default async function handler(request, response) {
         [payload.sub]
       )
 
-      const games = rows.length ? normalizeGames(rows[0].phase2_predictions) : []
+      const phase1_predictions = rows.length ? normalizePredictions(rows[0].phase1_predictions) : {}
 
-      sendJson(response, 200, { games })
+      sendJson(response, 200, { phase1_predictions })
       return
     }
 
     const body = await readJsonBody(request)
-    const games = normalizeGames(body.games)
+    const phase1_predictions = normalizePredictions(body.phase1_predictions)
 
     const rows = await queryNeon(
       databaseUrl,
       `
-      INSERT INTO public.user_predictions (user_id, phase2_predictions, updated_at)
-      VALUES ($1, $2::jsonb, now())
-      ON CONFLICT (user_id) DO UPDATE
-      SET phase2_predictions = EXCLUDED.phase2_predictions,
+      UPDATE public.user_predictions
+      SET phase1_predictions = $2::jsonb,
           updated_at = now()
-      RETURNING phase2_predictions
+      WHERE user_id = $1
+      RETURNING phase1_predictions
     `,
-      [payload.sub, JSON.stringify(games)]
+      [payload.sub, JSON.stringify(phase1_predictions)]
     )
 
-    const savedGames = rows.length ? normalizeGames(rows[0].phase2_predictions) : games
-
-    try {
-      const scorePayload = scoringService.calculateScorePayload(savedGames)
-
+    if (rows.length === 0) {
       await queryNeon(
         databaseUrl,
         `
-        INSERT INTO public.user_scores (user_id, total_score, phase1_score, phase2_score, calculated_at, updated_at)
-        VALUES ($1, $2, $3, $4, now(), now())
-        ON CONFLICT (user_id) DO UPDATE
-        SET total_score = EXCLUDED.total_score,
-            phase1_score = EXCLUDED.phase1_score,
-            phase2_score = EXCLUDED.phase2_score,
-            calculated_at = now(),
-            updated_at = now()
+        INSERT INTO public.user_predictions (user_id, phase1_predictions, updated_at)
+        VALUES ($1, $2::jsonb, now())
       `,
-        [
-          payload.sub,
-          Number(scorePayload.totalScore) || 0,
-          Number(scorePayload.phase1Score) || 0,
-          Number(scorePayload.phase2Score) || 0,
-        ]
+        [payload.sub, JSON.stringify(phase1_predictions)]
       )
-    } catch (scoreError) {
-      logAuthEvent('error', route, requestId, 'score sync failed', {
-        error: scoreError instanceof Error ? scoreError.message : String(scoreError),
-      })
     }
 
-    sendJson(response, 200, { games: savedGames })
-  } catch (error) {
-    logAuthEvent('error', route, requestId, 'predictions request failed', {
-      durationMs: Date.now() - startedAt,
-      error: error instanceof Error ? error.message : String(error),
+    const savedPredictions = rows.length ? normalizePredictions(rows[0].phase1_predictions) : phase1_predictions
+
+    logAuthEvent('info', route, requestId, 'request completed', {
+      method: request.method,
+      userId: payload.sub,
+      duration: Date.now() - startedAt,
     })
+
+    sendJson(response, 200, { phase1_predictions: savedPredictions })
+  } catch (error) {
+    logAuthEvent('error', route, requestId, 'unexpected error', {
+      error: error instanceof Error ? error.message : String(error),
+      method: request.method,
+      duration: Date.now() - startedAt,
+    })
+
     sendJson(response, 500, {
-      error: error instanceof Error ? error.message : 'Erro ao consultar palpites.',
+      error: 'Falha ao processar requisição.',
     })
   }
 }
