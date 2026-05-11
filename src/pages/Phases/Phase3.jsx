@@ -9,7 +9,7 @@ import {
   normalizePhase3Predictions,
 } from '../../services/phase3Bracket';
 import { PHASE3_RESULTS } from '../../services/phase3Results';
-import { calculatePhase3MatchScore, calculatePhase3TotalScore } from '../../services/phase3Scoring';
+import { calculatePhase3MatchScore, calculatePhase3TotalScore, calculatePhase3SlamsCount } from '../../services/phase3Scoring';
 import { phase3Service } from '../../services/phase3Service';
 import { computeGroupStandings } from '../../utils/helpers';
 import './phase3.scss';
@@ -43,6 +43,11 @@ export default function Phase3Page() {
 
   const earnedPoints = useMemo(
     () => calculatePhase3TotalScore(predictions, PHASE3_RESULTS),
+    [predictions]
+  );
+
+  const slamsCount = useMemo(
+    () => calculatePhase3SlamsCount(predictions, PHASE3_RESULTS),
     [predictions]
   );
 
@@ -281,6 +286,10 @@ export default function Phase3Page() {
         </div>
 
         <div className="phase3-stats" aria-live="polite">
+          <div className="phase3-stat-card">
+            <span className="phase3-stat-value">{slamsCount}</span>
+            <span className="phase3-stat-label">Cravadas</span>
+          </div>
           <div className="phase3-stat-card">
             <span className="phase3-stat-value">{earnedPoints}</span>
             <span className="phase3-stat-label">Pontos</span>

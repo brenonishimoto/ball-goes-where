@@ -223,9 +223,6 @@ export default function Phase1Page() {
             <button type="button" className="btn-save" onClick={handleSave} disabled={isSaving}>
               {isSaving ? 'Salvando...' : 'Salvar'}
             </button>
-            <button type="button" className="btn-clear" onClick={handleClear}>
-              Limpar Tudo
-            </button>
           </div>
         </div>
       </section>

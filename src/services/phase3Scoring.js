@@ -76,3 +76,12 @@ export const calculatePhase3TotalScore = (predictions, results) => Object.entrie
   (total, [matchId, official]) => total + calculatePhase3MatchScore(predictions?.[matchId], official).points,
   0
 );
+
+export const calculatePhase3SlamsCount = (predictions, results) => Object.entries(results).reduce(
+  (count, [matchId, official]) => {
+    const score = calculatePhase3MatchScore(predictions?.[matchId], official);
+    // Cravada = todos os critérios perfeitos (8 pontos = 4 + 3 + 1)
+    return count + (score.classified && score.exactScore && score.result ? 1 : 0);
+  },
+  0
+);

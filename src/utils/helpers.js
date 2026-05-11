@@ -19,6 +19,28 @@ export const countPredictions = (games) => {
   return games.filter(game => game.placarM !== null && game.placarV !== null).length;
 };
 
+// Contar cravadas fase 2 (placar exato correto = 5 pontos)
+export const countPhase02Slams = (games) => {
+  return games.filter(game => {
+    if (
+      game.placarM === null ||
+      game.placarV === null ||
+      game.officialM === null ||
+      game.officialV === null
+    ) {
+      return false;
+    }
+
+    const pM = Number(game.placarM);
+    const pV = Number(game.placarV);
+    const oM = Number(game.officialM);
+    const oV = Number(game.officialV);
+
+    // Placar exato correto
+    return pM === oM && pV === oV;
+  }).length;
+};
+
 // Calcular pontos totais
 export const calculateTotalPoints = (games) => {
   // Usa a mesma regra do ranking: 3 pontos pelo resultado e +2 pelo placar exato.
@@ -85,4 +107,28 @@ export const computeGroupStandings = (games, teams, scoreSource = 'official') =>
   });
 
   return rows;
+};
+
+// Obter data atual em fuso horário de Brasília
+export const getTodayInBrasilia = () => {
+  const brazilDate = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+  const [datePart] = brazilDate.split(' ');
+  const cleanedDate = datePart.replace(',', ''); // Remove vírgula se existir
+  return cleanedDate;
+};
+
+// Filtrar jogos do dia em fuso horário de Brasília
+export const getTodaysGames = (games) => {
+  const todayBrasilia = getTodayInBrasilia();
+  
+  const todaysGames = games.filter(game => {
+    const gameDatePart = (game.data.split(', ')[1] || game.data).trim();
+    return gameDatePart === todayBrasilia;
+  }).sort((a, b) => {
+    const timeA = a.hora.replace('h', ':');
+    const timeB = b.hora.replace('h', ':');
+    return timeA.localeCompare(timeB);
+  });
+  
+  return todaysGames;
 };

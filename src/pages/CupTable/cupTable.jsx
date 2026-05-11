@@ -175,8 +175,7 @@ export default function CupTablePage({
 
               {editable && (
                 <div className="phase-actions">
-                  <button type="button" className="btn btn-danger" onClick={clearData} disabled={saving}>Limpar Fase 2</button>
-                  <button type="button" className="btn btn-success" onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : 'Salvar Fase 2'}</button>
+                  <button type="button" className="btn btn-success" onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : 'Salvar Resultados'}</button>
                 </div>
               )}
             </div>

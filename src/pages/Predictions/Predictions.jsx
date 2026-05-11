@@ -1,5 +1,5 @@
 import { useGames } from '../../hooks/useGames';
-import { calculateTotalPoints, countPredictions } from '../../utils/helpers';
+import { calculateTotalPoints, countPredictions, countPhase02Slams } from '../../utils/helpers';
 import { GROUPS } from '../../services/gameService';
 import CupTablePage from '../CupTable/cupTable';
 import './predictions.scss';
@@ -8,30 +8,37 @@ export default function PredictionsPage() {
   const { games, updateScore, save, clearData } = useGames();
   const totalPoints = calculateTotalPoints(games);
   const predictions = countPredictions(games);
+  const slams = countPhase02Slams(games);
 
   return (
     <div className="predictions-page">
       <section className="predictions-header">
         <div className="hero-copy">
-          <span className="eyebrow">Copa do Mundo 2026</span>
-          <h1>Fase 2</h1>
-          <p>Preencha apenas os placares e acompanhe sua pontuação em tempo real.</p>
+          <span className="eyebrow">FASE 02: GRUPOS</span>
+          <h1>Acerte o Caminho das Nações</h1>
+          <p>Preencha os placares dos jogos da fase de grupos e acompanhe sua pontuação em tempo real.</p>
         </div>
 
-        <div className="stats-grid">
-          <div className="stat-card">
-            <span className="stat-value">{predictions}</span>
-            <span className="stat-label">Cravadas</span>
+        <div className="predictions-stats" aria-live="polite">
+          <div className="predictions-stat-card">
+            <span className="predictions-stat-value">{slams}</span>
+            <span className="predictions-stat-label">Cravadas</span>
           </div>
-          <div className="stat-card">
-            <span className="stat-value stat-value-compact">{predictions}/{games.length}</span>
-            <span className="stat-label">Preenchidos</span>
+          <div className="predictions-stat-card">
+            <span className="predictions-stat-value">{totalPoints}</span>
+            <span className="predictions-stat-label">Pontos</span>
           </div>
-          <div className="stat-card">
-            <span className="stat-value">{totalPoints}</span>
-            <span className="stat-label">Pontos</span>
+          <div className="predictions-stat-card">
+            <span className="predictions-stat-value predictions-stat-value-small">{predictions}/{games.length}</span>
+            <span className="predictions-stat-label">Preenchidos</span>
           </div>
         </div>
+      </section>
+
+      <section className="predictions-rules">
+        <div><strong>3 pts</strong><span>Resultado Correto</span></div>
+        <div><strong>+2 pts</strong><span>Placar Exato</span></div>
+        <div><strong>5 pts</strong><span>Cravada</span></div>
       </section>
 
       <CupTablePage
