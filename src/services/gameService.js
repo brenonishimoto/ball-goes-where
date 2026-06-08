@@ -24,10 +24,10 @@ export const ROUNDS = [
 ];
 
 const buildInitialGames = () => ([
-  { id: 0, mandante: 'Brasil', visitante: 'Argentina', placarM: 2, placarV: 1, officialM: 2, officialV: 1, fase: 'Teste', rodada: 0, data: 'Seg, 11/05/2026', hora: '14h30' },
-  { id: 1, mandante: 'México', visitante: 'África do Sul', placarM: null, placarV: null, officialM: 3, officialV: 2, fase: 'Grupo A', rodada: 1, data: 'Qui, 11/06/2026', hora: '16h00' },
-  { id: 2, mandante: 'Coreia do Sul', visitante: 'República Tcheca', placarM: null, placarV: null, officialM: 1, officialV: 1, fase: 'Grupo A', rodada: 1, data: 'Qui, 11/06/2026', hora: '23h00' },
-  { id: 3, mandante: 'Canadá', visitante: 'Bósnia e Herzegovina', placarM: null, placarV: null, officialM: 2, officialV: 1, fase: 'Grupo B', rodada: 1, data: 'Sex, 12/06/2026', hora: '16h00' },
+  { id: 0, mandante: 'Brasil', visitante: 'Argentina', placarM: 2, placarV: 1, officialM: 2, officialV: 1, fase: 'Teste', rodada: 0, data: 'Seg, 08/06/2026', hora: '14h30' },
+  { id: 1, mandante: 'México', visitante: 'África do Sul', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo A', rodada: 1, data: 'Qui, 11/06/2026', hora: '16h00' },
+  { id: 2, mandante: 'Coreia do Sul', visitante: 'República Tcheca', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo A', rodada: 1, data: 'Qui, 11/06/2026', hora: '23h00' },
+  { id: 3, mandante: 'Canadá', visitante: 'Bósnia e Herzegovina', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo B', rodada: 1, data: 'Sex, 12/06/2026', hora: '16h00' },
   { id: 4, mandante: 'Estados Unidos', visitante: 'Paraguai', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo D', rodada: 1, data: 'Sex, 12/06/2026', hora: '22h00' },
   { id: 5, mandante: 'Catar', visitante: 'Suíça', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo B', rodada: 1, data: 'Sáb, 13/06/2026', hora: '16h00' },
   { id: 6, mandante: 'Brasil', visitante: 'Marrocos', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo C', rodada: 1, data: 'Sáb, 13/06/2026', hora: '19h00' },
