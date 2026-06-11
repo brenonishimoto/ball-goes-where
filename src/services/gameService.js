@@ -24,7 +24,7 @@ export const ROUNDS = [
 ];
 
 const buildInitialGames = () => ([
-  { id: 1, mandante: 'México', visitante: 'África do Sul', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo A', rodada: 1, data: 'Qui, 11/06/2026', hora: '16h00' },
+  { id: 1, mandante: 'México', visitante: 'África do Sul', placarM: null, placarV: null, officialM: 2, officialV: 0, fase: 'Grupo A', rodada: 1, data: 'Qui, 11/06/2026', hora: '16h00' },
   { id: 2, mandante: 'Coreia do Sul', visitante: 'República Tcheca', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo A', rodada: 1, data: 'Qui, 11/06/2026', hora: '23h00' },
   { id: 3, mandante: 'Canadá', visitante: 'Bósnia e Herzegovina', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo B', rodada: 1, data: 'Sex, 12/06/2026', hora: '16h00' },
   { id: 4, mandante: 'Estados Unidos', visitante: 'Paraguai', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo D', rodada: 1, data: 'Sex, 12/06/2026', hora: '22h00' },
