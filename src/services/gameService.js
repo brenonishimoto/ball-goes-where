@@ -98,16 +98,6 @@ const buildInitialGames = () => ([
   { id: 72, mandante: 'Jordânia', visitante: 'Argentina', placarM: null, placarV: null, fase: 'Grupo J', rodada: 3, data: 'Sáb, 27/06/2026', hora: '23h00' },
 ]);
 
-const dedupeGames = (games) => {
-  const seen = new Set();
-  return games.filter((game) => {
-    const key = [game.fase, game.rodada, game.mandante, game.visitante, game.data, game.hora].join('|');
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-};
-
 export const INITIAL_GAMES = buildInitialGames().map(g => ({
   ...g,
   officialM: g.officialM ?? null,
@@ -117,24 +107,35 @@ export const INITIAL_GAMES = buildInitialGames().map(g => ({
 const cloneInitialGames = () => INITIAL_GAMES.map(game => ({ ...game }));
 
 const enrichWithInitialGames = (games) => {
-  const baseById = new Map(INITIAL_GAMES.map((game) => [game.id, game]));
+  // Reconstrói a lista completa com base em INITIAL_GAMES.
+  // Protege contra um localStorage “parcial”/malformado.
+  const savedArray = Array.isArray(games) ? games : [];
 
-  return dedupeGames(games).map((game) => {
-    const baseGame = baseById.get(game.id);
+  // Se o storage veio incompleto (muito menor que o esperado), ignoramos para não
+  // “zerar” placares de vários jogos ao recriar a lista.
+  const expectedCount = INITIAL_GAMES.length;
+  if (savedArray.length > 0 && savedArray.length < expectedCount) {
+    return cloneInitialGames();
+  }
 
-    if (!baseGame) {
-      return {
-        ...game,
-        officialM: game.officialM ?? null,
-        officialV: game.officialV ?? null,
-      };
+  const normalized = savedArray
+    .filter((g) => g && typeof g === 'object' && typeof g.id === 'number');
+
+  const savedById = new Map(normalized.map((g) => [g.id, g]));
+
+  return INITIAL_GAMES.map((baseGame) => {
+    const savedGame = savedById.get(baseGame.id);
+
+    if (!savedGame) {
+      return { ...baseGame };
     }
 
     return {
       ...baseGame,
-      ...game,
-      officialM: game.officialM ?? baseGame.officialM ?? null,
-      officialV: game.officialV ?? baseGame.officialV ?? null,
+      placarM: savedGame.placarM ?? baseGame.placarM ?? null,
+      placarV: savedGame.placarV ?? baseGame.placarV ?? null,
+      officialM: savedGame.officialM ?? baseGame.officialM ?? null,
+      officialV: savedGame.officialV ?? baseGame.officialV ?? null,
     };
   });
 };
@@ -168,16 +169,23 @@ export const gameService = {
 
   // Atualizar placar de um jogo
   updateGameScore: (id, placarM, placarV, storageKey = STORAGE_KEY) => {
+    const toNullableNumber = (v) => {
+      if (v === '' || v === null || v === undefined) return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
+
     const games = gameService.getAllGames(storageKey);
-    const updatedGames = games.map(game =>
-      game.id === id
-        ? {
-            ...game,
-            placarM: placarM === '' || placarM === null ? null : Number(placarM),
-            placarV: placarV === '' || placarV === null ? null : Number(placarV),
-          }
-        : game
-    );
+    const updatedGames = games.map((game) => {
+      if (game.id !== id) return game;
+
+      return {
+        ...game,
+        placarM: toNullableNumber(placarM),
+        placarV: toNullableNumber(placarV),
+      };
+    });
+
     return gameService.saveGames(updatedGames, storageKey);
   },
 

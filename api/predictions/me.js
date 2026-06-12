@@ -112,7 +112,53 @@ export default async function handler(request, response) {
     }
 
     const body = await readJsonBody(request)
-    const games = normalizeGames(body.games)
+    const incomingGames = normalizeGames(body.games)
+
+    // Importante: o PUT do front pode enviar um array "parcial".
+    // Para não apagar palpites de outros jogos/grupos, fazemos merge no backend
+    // preservando o JSON atual e aplicando apenas placarM/placarV por id.
+    const currentRows = await queryNeon(
+      databaseUrl,
+      `
+      SELECT phase2_predictions
+      FROM public.user_predictions
+      WHERE user_id = $1
+      LIMIT 1
+      `,
+      [payload.sub]
+    )
+
+    const currentGames = currentRows.length
+      ? normalizeGames(currentRows[0].phase2_predictions)
+      : []
+
+    const byId = new Map(
+      currentGames
+        .filter((g) => g && typeof g === 'object' && typeof g.id === 'number')
+        .map((g) => [g.id, g])
+    )
+
+    // aplica delta vindo do payload
+    for (const g of incomingGames) {
+      if (!g || typeof g !== 'object' || typeof g.id !== 'number') continue
+
+      const existing = byId.get(g.id)
+      if (!existing) continue
+
+      const toNullableNumber = (v) => {
+        if (v === '' || v === null || v === undefined) return null
+        const n = Number(v)
+        return Number.isFinite(n) ? n : null
+      }
+
+      existing.placarM = toNullableNumber(g.placarM)
+      existing.placarV = toNullableNumber(g.placarV)
+    }
+
+    const mergedGames = currentGames.map((g) => {
+      if (!g || typeof g !== 'object' || typeof g.id !== 'number') return g
+      return byId.get(g.id) ?? g
+    })
 
     const rows = await queryNeon(
       databaseUrl,
@@ -124,10 +170,10 @@ export default async function handler(request, response) {
           updated_at = now()
       RETURNING phase2_predictions
     `,
-      [payload.sub, JSON.stringify(games)]
+      [payload.sub, JSON.stringify(mergedGames)]
     )
 
-    const savedGames = rows.length ? normalizeGames(rows[0].phase2_predictions) : games
+    const savedGames = rows.length ? normalizeGames(rows[0].phase2_predictions) : mergedGames
 
     try {
       const scorePayload = scoringService.calculateScorePayload(savedGames)

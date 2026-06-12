@@ -7,19 +7,19 @@ import './phase1.scss';
 
 const phase1Sections = [
   {
-    title: 'Troféus e Prêmios',
+    title: 'Troféus e Prêmios de Equipes',
     fields: [
       { key: 'champion', label: 'Campeão', placeholder: 'País campeão', points: 10, type: 'text' },
-      { key: 'goldenBall', label: 'Bola de Ouro', placeholder: 'Melhor jogador', points: 10, type: 'text' },
-      { key: 'goldenBoot', label: 'Chuteira de Ouro', placeholder: 'Artilheiro', points: 10, type: 'text' },
-      { key: 'totalGoals', label: 'Nº de Gols', placeholder: 'Total de gols', points: 5, type: 'number' },
+      { key: 'fairPlay', label: 'Fair Play', placeholder: 'Melhor comportamento', points: 7, type: 'text' },
     ],
   },
   {
-    title: 'Jogadores Destaque',
+    title: 'Troféus e Prêmios de Jogadores',
     fields: [
+      { key: 'goldenBall', label: 'Bola de Ouro', placeholder: 'Melhor jogador', points: 10, type: 'text' },
+      { key: 'goldenBoot', label: 'Chuteira de Ouro', placeholder: 'Artilheiro', points: 10, type: 'text' },
+      { key: 'totalGoals', label: 'Nº de Gols', placeholder: 'Total de gols', points: 5, type: 'number' },
       { key: 'assists', label: 'Garçom', placeholder: 'Mais assistências', points: 8, type: 'text' },
-      { key: 'fairPlay', label: 'Fair Play', placeholder: 'Melhor comportamento', points: 7, type: 'text' },
       { key: 'revelation', label: 'Revelação', placeholder: 'Melhor revelação', points: 7, type: 'text' },
     ],
   },
@@ -97,7 +97,7 @@ export default function Phase1Page() {
   const [isSaving, setIsSaving] = useState(false);
   const earnedPoints = calculatePhase1Points(predictions);
 
-  // Load predictions on mount
+  // Load predictions on mount / when auth changes
   useEffect(() => {
     const loadPredictions = async () => {
       // If user is authenticated, load from server
@@ -119,10 +119,24 @@ export default function Phase1Page() {
         } catch (error) {
           console.error('Erro ao carregar previsões do localStorage:', error);
         }
+      } else {
+        setPredictions(emptyPredictions);
       }
     };
 
     loadPredictions();
+  }, [token, user?.id, localStorageKey]);
+
+  // Quando deslogar enquanto está na página da Phase 1, limpar os campos imediatamente
+  useEffect(() => {
+    if (!token || !user?.id) {
+      setPredictions(emptyPredictions);
+      try {
+        localStorage.removeItem(localStorageKey);
+      } catch {
+        // ignore
+      }
+    }
   }, [token, user?.id, localStorageKey]);
 
   // Save predictions locally while typing

@@ -53,6 +53,33 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     window.localStorage.removeItem(AUTH_TOKEN_KEY);
+
+    // Limpa previsões da Fase 1 (pré-copa)
+    try {
+      window.localStorage.removeItem('phase1-predictions');
+    } catch {
+      // ignore
+    }
+
+    // Limpa dados da Fase 2 (grupos) tanto do guest quanto do usuário atual e a cópia imutável.
+    try {
+      const STORAGE_KEY = 'bolao-copa-2026-v2';
+      const userScope = user?.id ? `user-${user.id}` : 'guest';
+
+      const storageMainKey = `${STORAGE_KEY}:${userScope}`;
+      const guestMainKey = `${STORAGE_KEY}:guest`;
+
+      const copyKeyForScope = `${storageMainKey}:phase2_predictions_copy`;
+      const copyKeyForGuest = `${guestMainKey}:phase2_predictions_copy`;
+
+      window.localStorage.removeItem(storageMainKey);
+      window.localStorage.removeItem(guestMainKey);
+      window.localStorage.removeItem(copyKeyForScope);
+      window.localStorage.removeItem(copyKeyForGuest);
+    } catch {
+      // ignore
+    }
+
     setToken(null);
     setUser(null);
   };

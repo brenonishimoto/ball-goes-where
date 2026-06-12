@@ -57,13 +57,39 @@ const requestJson = async (path, { method = 'GET', body, token } = {}) => {
   return parseResponse(response);
 };
 
-const normalizeGames = (games) => (Array.isArray(games) ? games : []);
+const normalizeGames = (games) => {
+  // Backend pode retornar a lista dentro de uma string JSON (ex: { games: "[{...}]" })
+  if (Array.isArray(games)) {
+    return games;
+  }
+
+  if (typeof games === 'string') {
+    const trimmed = games.trim();
+    if (trimmed) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+  }
+
+  // Fallbacks comuns quando o backend muda o shape
+  if (games && typeof games === 'object') {
+    return Object.values(games);
+  }
+
+  return [];
+};
 
 export const predictionService = {
   async getMyPredictions({ token }) {
     const data = await requestJson('/me', { token });
-    return normalizeGames(data.games);
+    const remoteGames = data?.games ?? data?.phase2_predictions ?? data?.data?.games;
+    return normalizeGames(remoteGames);
   },
+
 
   async saveMyPredictions({ token, games }) {
     const data = await requestJson('/me', {

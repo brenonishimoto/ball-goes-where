@@ -56,20 +56,18 @@ export default function HomePage() {
                   </div>
                   <div className="game-score">
                     <div className="score-display">
-                      {game.placarM !== null && game.placarV !== null ? (
-                        <>
-                          <span className="score-number">{game.placarM}</span>
-                          <span className="score-separator">x</span>
-                          <span className="score-number">{game.placarV}</span>
-                        </>
-                      ) : game.officialM !== null && game.officialV !== null ? (
+                      {game.officialM !== null && game.officialV !== null ? (
                         <>
                           <span className="score-number">{game.officialM}</span>
                           <span className="score-separator">x</span>
                           <span className="score-number">{game.officialV}</span>
                         </>
                       ) : (
-                        <span className="score-vs">VS</span>
+                        <>
+                          <span className="score-number">-</span>
+                          <span className="score-separator">x</span>
+                          <span className="score-number">-</span>
+                        </>
                       )}
                     </div>
                   </div>
