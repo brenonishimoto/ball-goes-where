@@ -1,4 +1,4 @@
-import { PHASE3_MATCHES } from './phase3Bracket';
+import { PHASE3_MATCHES } from './phase3Bracket.js';
 
 export const KNOCKOUT_CODE_TO_TEAM = {
   'Vencedor Grupo A': '',

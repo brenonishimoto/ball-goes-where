@@ -1,0 +1,3 @@
+- [ ] Alterar `src/services/mataMataService.js` para importar `phase3Bracket.js` explicitamente
+- [ ] Rodar build/test básico (se disponível) e garantir que o runtime não quebra
+- [ ] Re-tentar `POST /api/ranking/refresh` e confirmar que sai do 500
