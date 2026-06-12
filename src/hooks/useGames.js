@@ -136,21 +136,44 @@ export const useGames = ({ enabled = true } = {}) => {
     };
   }, [enabled, loadingAuth, token, storageKey]);
 
-  const updateScore = useCallback((id, placarM, placarV) => {
-    // Debug: ajuda a entender o primeiro delete (timing/shape do state)
-    // eslint-disable-next-line no-console
-    console.debug('[phase2] updateScore', { id, placarM, placarV });
+  const parseGameStartTimestamp = (game) => {
+    if (!game || typeof game !== 'object') return null;
+    const { data, hora } = game;
+    if (!data || !hora) return null;
 
+    // data: "Qui, 11/06/2026" (pt-BR)
+    // hora: "16h00" (ou "00h00")
+    const dateMatch = String(data).match(/(\d{2}\/\d{2}\/\d{4})/);
+    const timeMatch = String(hora).match(/(\d{2})h(\d{2})/);
+    if (!dateMatch || !timeMatch) return null;
+
+    const [, ddmmyyyy] = dateMatch;
+    const [dd, mm, yyyy] = ddmmyyyy.split('/');
+    const [, HH, mm2] = timeMatch;
+
+    return new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(HH), Number(mm2)).getTime();
+  };
+
+  const updateScore = useCallback((id, placarM, placarV) => {
     const toNullableNumber = (v) => {
       if (v === '' || v === null || v === undefined) return null;
       const n = Number(v);
       return Number.isFinite(n) ? n : null;
     };
 
+    const nowMs = Date.now();
+
     setGames((prev) => {
       const list = Array.isArray(prev) ? prev : [];
       return list.map((g) => {
         if (!g || typeof g !== 'object' || g.id !== id) return g;
+
+        const startMs = parseGameStartTimestamp(g);
+        if (startMs && nowMs >= startMs) {
+          // bloqueado: não altera placar
+          return g;
+        }
+
         return {
           ...g,
           placarM: toNullableNumber(placarM),
@@ -159,6 +182,7 @@ export const useGames = ({ enabled = true } = {}) => {
       });
     });
   }, []);
+
 
   const addGame = useCallback((mandante, visitante, fase) => {
     const updated = gameService.addGame(mandante, visitante, fase, storageKey);

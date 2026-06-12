@@ -14,16 +14,43 @@ export default function GameInput({
   );
 
   const hasOfficialResult = game.officialM !== null && game.officialV !== null;
+
+  const parseGameStartTimestamp = (g) => {
+    if (!g || typeof g !== 'object') return null;
+    const { data, hora } = g;
+    if (!data || !hora) return null;
+
+    // data: "Qui, 11/06/2026" (pt-BR)
+    // hora: "16h00" (ou "00h00")
+    const dateMatch = String(data).match(/(\d{2}\/\d{2}\/\d{4})/);
+    const timeMatch = String(hora).match(/(\d{2})h(\d{2})/);
+    if (!dateMatch || !timeMatch) return null;
+
+    const [, ddmmyyyy] = dateMatch;
+    const [dd, mm, yyyy] = ddmmyyyy.split('/');
+    const [, HH, mm2] = timeMatch;
+
+    return new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(HH), Number(mm2)).getTime();
+  };
+
+  const isLocked = (() => {
+    const startMs = parseGameStartTimestamp(game);
+    if (!startMs) return false;
+    return Date.now() >= startMs;
+  })();
+
   const handleMandanteChange = (e) => {
+    if (isLocked) return;
     onScoreChange(game.id, e.target.value, game.placarV);
   };
 
   const handleVisitanteChange = (e) => {
+    if (isLocked) return;
     onScoreChange(game.id, game.placarM, e.target.value);
   };
 
   return (
-    <div className="game-input">
+    <div className={`game-input${isLocked ? ' is-locked' : ''}`}>
       <div className="game-header">
         <div className="game-meta">
           <span>{game.data}</span>
@@ -47,6 +74,8 @@ export default function GameInput({
               onChange={handleMandanteChange}
               placeholder="-"
               className="score-input"
+              disabled={isLocked}
+              aria-disabled={isLocked}
             />
             <span className="score-separator">-</span>
             <input
@@ -57,6 +86,8 @@ export default function GameInput({
               onChange={handleVisitanteChange}
               placeholder="-"
               className="score-input"
+              disabled={isLocked}
+              aria-disabled={isLocked}
             />
           </div>
 
@@ -84,3 +115,4 @@ export default function GameInput({
     </div>
   );
 }
+

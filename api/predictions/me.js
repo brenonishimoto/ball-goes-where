@@ -138,22 +138,50 @@ export default async function handler(request, response) {
         .map((g) => [g.id, g])
     )
 
-    // aplica delta vindo do payload
+    const parseGameStartTimestamp = (game) => {
+      if (!game || typeof game !== 'object') return null
+      const { data, hora } = game
+      if (!data || !hora) return null
+
+      // data: "Qui, 11/06/2026" (pt-BR)
+      // hora: "16h00" (ou "00h00")
+      const dateMatch = String(data).match(/(\d{2}\/\d{2}\/\d{4})/)
+      const timeMatch = String(hora).match(/(\d{2})h(\d{2})/)
+      if (!dateMatch || !timeMatch) return null
+
+      const [_, ddmmyyyy] = dateMatch
+      const [dd, mm, yyyy] = ddmmyyyy.split('/')
+      const [_, HH, mm2] = timeMatch
+
+      // UTC+? Não temos timezone no dado; usamos horário local do servidor.
+      return new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(HH), Number(mm2)).getTime()
+    }
+
+    const toNullableNumber = (v) => {
+      if (v === '' || v === null || v === undefined) return null
+      const n = Number(v)
+      return Number.isFinite(n) ? n : null
+    }
+
+    const nowMs = Date.now()
+
+    // aplica delta vindo do payload, mas ignora jogos já ocorridos (agora >= data+hora)
     for (const g of incomingGames) {
       if (!g || typeof g !== 'object' || typeof g.id !== 'number') continue
 
       const existing = byId.get(g.id)
       if (!existing) continue
 
-      const toNullableNumber = (v) => {
-        if (v === '' || v === null || v === undefined) return null
-        const n = Number(v)
-        return Number.isFinite(n) ? n : null
+      const startMs = parseGameStartTimestamp(existing)
+      if (startMs && nowMs >= startMs) {
+        // bloqueado: não altera placar
+        continue
       }
 
       existing.placarM = toNullableNumber(g.placarM)
       existing.placarV = toNullableNumber(g.placarV)
     }
+
 
     const mergedGames = currentGames.map((g) => {
       if (!g || typeof g !== 'object' || typeof g.id !== 'number') return g

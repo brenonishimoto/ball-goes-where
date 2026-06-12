@@ -1,5 +1,14 @@
 .game-input {
   background-color: #ffffff;
+  position: relative;
+
+  &.is-locked {
+    opacity: 0.9;
+  }
+
+
+
+
   border: 1px solid #e5e7eb;
   border-radius: 0.75rem;
   overflow: hidden;
