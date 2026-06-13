@@ -149,9 +149,9 @@ export default async function handler(request, response) {
       const timeMatch = String(hora).match(/(\d{2})h(\d{2})/)
       if (!dateMatch || !timeMatch) return null
 
-      const [_, ddmmyyyy] = dateMatch
+      const [, ddmmyyyy] = dateMatch
       const [dd, mm, yyyy] = ddmmyyyy.split('/')
-      const [_, HH, mm2] = timeMatch
+      const [, HH, mm2] = timeMatch
 
       // UTC+? Não temos timezone no dado; usamos horário local do servidor.
       return new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(HH), Number(mm2)).getTime()
