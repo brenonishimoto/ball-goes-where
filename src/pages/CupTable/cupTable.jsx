@@ -38,13 +38,9 @@ export default function CupTablePage({
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Feedback imediato: salva localmente e notifica o usuário
-      try {
-        gameService.saveGames(games, gameService.getGameStorageKey('guest'));
-      } catch {
-        // ignore local save failures here
-      }
-      pushToast({ type: 'success', message: 'Fase 2 salva localmente.' });
+      // Como CupTable não recebe o storageKey via props, não fazemos "save local" aqui.
+      // O sincronismo real acontece via hook (backend + merge) e o usuário recarrega/visualiza o estado atualizado.
+      pushToast({ type: 'success', message: 'Salvando e sincronizando...' });
 
       const result = await save();
 
@@ -57,7 +53,7 @@ export default function CupTablePage({
       }
 
       pushToast({ type: 'success', message: 'Fase 2 sincronizada com o servidor.' });
-    } catch {
+    } catch (err) {
       pushToast({
         type: 'error',
         message: 'Não foi possível salvar a Fase 2. Tente novamente.',
