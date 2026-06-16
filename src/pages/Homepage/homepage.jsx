@@ -45,6 +45,9 @@ export default function HomePage() {
 
       {todaysGames.length > 0 && (
         <section className="todays-games">
+          <div className="todays-games-banner" aria-hidden="true">
+            <img src="/caio.png" alt="" />
+          </div>
           <h2 className="section-title">Jogos de Hoje</h2>
           <div className="games-container">
             {todaysGames.map((game) => (
