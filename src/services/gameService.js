@@ -46,7 +46,7 @@ const buildInitialGames = () => ([
   { id: 20, mandante: 'Áustria', visitante: 'Jordânia', placarM: null, placarV: null, officialM: 3, officialV: 1, fase: 'Grupo J', rodada: 1, data: 'Ter, 17/06/2026', hora: '01h00' },
   { id: 21, mandante: 'Portugal', visitante: 'Rep. Democrática do Congo', placarM: null, placarV: null, officialM: 1, officialV: 1, fase: 'Grupo K', rodada: 1, data: 'Qua, 17/06/2026', hora: '14h00' },
   { id: 22, mandante: 'Inglaterra', visitante: 'Croácia', placarM: null, placarV: null, officialM: 4, officialV: 2, fase: 'Grupo L', rodada: 1, data: 'Qua, 17/06/2026', hora: '17h00' },
-  { id: 23, mandante: 'Gana', visitante: 'Panamá', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo L', rodada: 1, data: 'Qua, 17/06/2026', hora: '20h00' },
+  { id: 23, mandante: 'Gana', visitante: 'Panamá', placarM: null, placarV: null, officialM: 1, officialV: 0, fase: 'Grupo L', rodada: 1, data: 'Qua, 17/06/2026', hora: '20h00' },
   { id: 24, mandante: 'Uzbequistão', visitante: 'Colômbia', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo K', rodada: 1, data: 'Qua, 17/06/2026', hora: '21h00' },
   { id: 25, mandante: 'República Tcheca', visitante: 'África do Sul', placarM: null, placarV: null, fase: 'Grupo A', rodada: 2, data: 'Qui, 18/06/2026', hora: '13h00' },
   { id: 26, mandante: 'Suíça', visitante: 'Bósnia e Herzegovina', placarM: null, placarV: null, fase: 'Grupo B', rodada: 2, data: 'Qui, 18/06/2026', hora: '16h00' },
