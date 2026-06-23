@@ -48,6 +48,9 @@ export default function HomePage() {
           <div className="todays-games-banner" aria-hidden="true">
             <img src="/caio.png" alt="" />
           </div>
+          <div className="save-warning" role="note">
+            Warning: Deslogue e logue novamente para garantir que os placares foram salvos
+          </div>
           <h2 className="section-title">Jogos de Hoje</h2>
           <div className="games-container">
             {todaysGames.map((game) => (
