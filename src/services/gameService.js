@@ -88,7 +88,7 @@ const buildInitialGames = () => ([
   { id: 62, mandante: 'Senegal', visitante: 'Iraque', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo I', rodada: 3, data: 'Sex, 26/06/2026', hora: '16h00' },
   { id: 63, mandante: 'Cabo Verde', visitante: 'Arábia Saudita', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo H', rodada: 3, data: 'Sex, 26/06/2026', hora: '21h00' },
   { id: 64, mandante: 'Uruguai', visitante: 'Espanha', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo H', rodada: 3, data: 'Sex, 26/06/2026', hora: '21h00' },
-  { id: 65, mandante: 'Egito', visitante: 'Irã', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo G', rodada: 3, data: 'Sex, 26/06/2026', hora: '00h00' },
+  { id: 65, mandante: 'Egito', visitante: 'Irã', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo G', rodada: 3, data: 'Sex, 27/06/2026', hora: '00h00' },
   { id: 66, mandante: 'Nova Zelândia', visitante: 'Bélgica', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo G', rodada: 3, data: 'Sex, 27/06/2026', hora: '00h00' },
   { id: 67, mandante: 'Panamá', visitante: 'Inglaterra', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo L', rodada: 3, data: 'Sáb, 27/06/2026', hora: '18h00' },
   { id: 68, mandante: 'Croácia', visitante: 'Gana', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo L', rodada: 3, data: 'Sáb, 27/06/2026', hora: '18h00' },
