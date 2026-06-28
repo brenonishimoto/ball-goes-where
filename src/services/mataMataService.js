@@ -42,7 +42,7 @@ export const KNOCKOUT_BEST_THIRD_BY_SLOT = {
 
 const KNOCKOUT_OFFICIAL_RESULTS = {
   // Domingo, 28 de junho de 2026
-  75: { officialM: null, officialV: null, winner: '' }, // África do Sul x Canadá
+  75: { officialM: 1, officialV: 2, winner: 'B' }, // África do Sul x Canadá
 
   // Segunda-feira, 29 de junho de 2026
   73: { officialM: null, officialV: null, winner: '' }, // Suíça x Argélia
