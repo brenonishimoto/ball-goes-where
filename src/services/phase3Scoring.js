@@ -24,17 +24,17 @@ const regulationResult = (scoreA, scoreB) => {
 };
 
 const getPredictedWinnerName = (prediction) => {
-  if (prediction?.winner === 'A') return prediction.teamA;
-  if (prediction?.winner === 'B') return prediction.teamB;
+  if (prediction?.winner === 'A') return prediction.mandante;
+  if (prediction?.winner === 'B') return prediction.visitante;
   return '';
 };
 
 const isOfficialResultReady = (official) => (
   official &&
-  normalizeName(official.teamA) &&
-  normalizeName(official.teamB) &&
-  hasScore(official.scoreA) &&
-  hasScore(official.scoreB) &&
+  normalizeName(official.mandante) &&
+  normalizeName(official.visitante) &&
+  hasScore(official.placarM) &&
+  hasScore(official.placarV) &&
   (official.winner === 'A' || official.winner === 'B')
 );
 
@@ -50,16 +50,16 @@ export const calculatePhase3MatchScore = (prediction, official) => {
   }
 
   const predictedWinner = normalizeName(getPredictedWinnerName(prediction));
-  const officialWinner = normalizeName(official.winner === 'A' ? official.teamA : official.teamB);
+  const officialWinner = normalizeName(official.winner === 'A' ? official.mandante : official.visitante);
   const classified = Boolean(predictedWinner && predictedWinner === officialWinner);
 
-  const exactScore = hasScore(prediction?.scoreA)
-    && hasScore(prediction?.scoreB)
-    && Number(prediction?.scoreA) === Number(official.scoreA)
-    && Number(prediction?.scoreB) === Number(official.scoreB);
+  const exactScore = hasScore(prediction?.placarM)
+    && hasScore(prediction?.placarV)
+    && Number(prediction?.placarM) === Number(official.placarM)
+    && Number(prediction?.placarV) === Number(official.placarV);
 
-  const result = regulationResult(prediction?.scoreA, prediction?.scoreB)
-    === regulationResult(official.scoreA, official.scoreB);
+  const result = regulationResult(prediction?.placarM, prediction?.placarV)
+    === regulationResult(official.placarM, official.placarV);
 
   const points = (classified ? 4 : 0) + (exactScore ? 3 : 0) + (result ? 1 : 0);
 

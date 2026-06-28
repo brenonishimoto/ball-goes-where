@@ -1,48 +1,73 @@
 import { PHASE3_MATCHES } from './phase3Bracket.js';
 
 export const KNOCKOUT_CODE_TO_TEAM = {
-  'Vencedor Grupo A': '',
-  'Vencedor Grupo B': '',
-  'Vencedor Grupo C': '',
-  'Vencedor Grupo D': '',
-  'Vencedor Grupo E': '',
-  'Vencedor Grupo F': '',
-  'Vencedor Grupo G': '',
-  'Vencedor Grupo H': '',
-  'Vencedor Grupo I': '',
-  'Vencedor Grupo J': '',
-  'Vencedor Grupo K': '',
-  'Vencedor Grupo L': '',
-  '2o Grupo A': '',
-  '2o Grupo B': '',
-  '2o Grupo C': '',
-  '2o Grupo D': '',
-  '2o Grupo E': '',
-  '2o Grupo F': '',
-  '2o Grupo G': '',
-  '2o Grupo H': '',
-  '2o Grupo I': '',
-  '2o Grupo J': '',
-  '2o Grupo K': '',
-  '2o Grupo L': '',
+  'Vencedor Grupo A': 'México',
+  'Vencedor Grupo B': 'Suíça',
+  'Vencedor Grupo C': 'Brasil',
+  'Vencedor Grupo D': 'Estados Unidos',
+  'Vencedor Grupo E': 'Alemanha',
+  'Vencedor Grupo F': 'Holanda',
+  'Vencedor Grupo G': 'Bélgica',
+  'Vencedor Grupo H': 'Espanha',
+  'Vencedor Grupo I': 'França',
+  'Vencedor Grupo J': 'Argentina',
+  'Vencedor Grupo K': 'Colômbia',
+  'Vencedor Grupo L': 'Inglaterra',
+  '2o Grupo A': 'África do Sul',
+  '2o Grupo B': 'Canadá',
+  '2o Grupo C': 'Paraguai',
+  '2o Grupo D': 'Austrália',
+  '2o Grupo E': 'Costa do Marfim',
+  '2o Grupo F': 'Japão',
+  '2o Grupo G': 'Egito',
+  '2o Grupo H': 'Cabo Verde',
+  '2o Grupo I': 'Noruega',
+  '2o Grupo J': 'Áustria',
+  '2o Grupo K': 'Portugal',
+  '2o Grupo L': 'Croácia',
 };
 
 // Preencha aqui os classificados via regra de melhores 3os colocados,
 // usando exatamente o slot presente em PHASE3_MATCHES.
 export const KNOCKOUT_BEST_THIRD_BY_SLOT = {
-  '3o Grupo A/D/C/F/H': '',
-  '3o Grupo C/D/F/G/H': '',
-  '3o Grupo B/E/F/I/J': '',
-  '3o Grupo A/E/H/I/J': '',
-  '3o Grupo C/E/F/H/I': '',
-  '3o Grupo D/H/I/J/K': '',
-  '3o Grupo C/G/I/J': '',
-  '3o Grupo D/E/I/J/L': '',
+  '3o Grupo A/D/C/F/H': 'Argélia',
+  '3o Grupo C/D/F/G/H': 'Suécia',
+  '3o Grupo B/E/F/I/J': 'Bósnia e Herzegovina',
+  '3o Grupo A/E/H/I/J': 'Senegal',
+  '3o Grupo C/E/F/H/I': 'Equador',
+  '3o Grupo D/H/I/J/K': 'Rep. Democrática do Congo',
+  '3o Grupo C/G/I/J': 'Marrocos',
+  '3o Grupo D/E/I/J/L': 'Gana',
 };
 
 const KNOCKOUT_OFFICIAL_RESULTS = {
-  // Exemplo de preenchimento:
-  // 73: { officialM: 2, officialV: 1, winner: 'A' },
+  // Domingo, 28 de junho de 2026
+  75: { officialM: null, officialV: null, winner: '' }, // África do Sul x Canadá
+
+  // Segunda-feira, 29 de junho de 2026
+  73: { officialM: null, officialV: null, winner: '' }, // Suíça x Argélia
+  76: { officialM: null, officialV: null, winner: '' }, // Alemanha x Paraguai
+  81: { officialM: null, officialV: null, winner: '' }, // Brasil x Japão
+
+  // Terça-feira, 30 de junho de 2026
+  74: { officialM: null, officialV: null, winner: '' }, // França x Suécia
+  82: { officialM: null, officialV: null, winner: '' }, // Costa do Marfim x Noruega
+  83: { officialM: null, officialV: null, winner: '' }, // México x Equador
+
+  // Quarta-feira, 1º de julho de 2026
+  79: { officialM: null, officialV: null, winner: '' }, // Estados Unidos x Bósnia e Herzegovina
+  80: { officialM: null, officialV: null, winner: '' }, // Bélgica x Senegal
+  84: { officialM: null, officialV: null, winner: '' }, // Inglaterra x Rep. Democrática do Congo
+
+  // Quinta-feira, 2 de julho de 2026
+  77: { officialM: null, officialV: null, winner: '' }, // Portugal x Croácia
+  78: { officialM: null, officialV: null, winner: '' }, // Espanha x Áustria
+  87: { officialM: null, officialV: null, winner: '' }, // Holanda x Marrocos
+
+  // Sexta-feira, 3 de julho de 2026
+  85: { officialM: null, officialV: null, winner: '' }, // Argentina x Cabo Verde
+  86: { officialM: null, officialV: null, winner: '' }, // Austrália x Egito
+  88: { officialM: null, officialV: null, winner: '' }, // Colômbia x Gana
 };
 
 const resolveWinnerSide = (match) => {
@@ -100,6 +125,7 @@ export const buildInitialKnockoutGames = () => PHASE3_MATCHES.map((match) => {
     id: match.id,
     round: match.round,
     date: match.date,
+    hora: match.hora || '',
     city: match.city,
     mandanteCode: match.slotA,
     visitanteCode: match.slotB,

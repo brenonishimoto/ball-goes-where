@@ -1,10 +1,26 @@
+import { useMemo } from 'react';
 import { useGames } from '../../hooks/useGames';
 import { calculateTotalPoints, countPredictions, getTodaysGames } from '../../utils/helpers';
+import { INITIAL_KNOCKOUT_GAMES, resolveKnockoutGames } from '../../services/mataMataService';
 import Flag from '../../components/Flag/Flag';
 import './homepage.scss';
 
 export default function HomePage() {
   const { games, loading } = useGames();
+
+  const knockoutGames = useMemo(
+    () => resolveKnockoutGames(INITIAL_KNOCKOUT_GAMES),
+    []
+  );
+
+  const allGames = useMemo(() => {
+    const phase2Games = games || [];
+    const phase3Games = (knockoutGames || []).map((g) => ({
+      ...g,
+      data: `${g.date}/2026`,
+    }));
+    return [...phase2Games, ...phase3Games];
+  }, [games, knockoutGames]);
 
   if (loading) {
     return <div className="homepage">Carregando...</div>;
@@ -16,7 +32,7 @@ export default function HomePage() {
 
   const totalPoints = calculateTotalPoints(games);
   const predictions = countPredictions(games);
-  const todaysGames = getTodaysGames(games);
+  const todaysGames = getTodaysGames(allGames);
 
   return (
     <div className="homepage">

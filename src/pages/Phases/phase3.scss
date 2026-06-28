@@ -405,3 +405,29 @@
     }
   }
 }
+
+.phase3-match-card.is-started {
+  background: #f9fafb;
+  border-color: #e5e7eb;
+  opacity: 0.9;
+  
+  .phase3-score-input:disabled {
+    background-color: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+    border-color: #e5e7eb;
+  }
+  
+  .phase3-segmented button:disabled {
+    cursor: not-allowed;
+    background-color: #f9fafb;
+    color: #9ca3af;
+    border-color: #e5e7eb;
+    
+    &.is-active {
+      background-color: #e5e7eb;
+      color: #4b5563;
+      border-color: #d1d5db;
+    }
+  }
+}

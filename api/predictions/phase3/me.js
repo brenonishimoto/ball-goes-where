@@ -8,6 +8,7 @@ import {
 } from '../../../src/server/auth.js'
 import { PHASE3_RESULTS } from '../../../src/services/phase3Results.js'
 import { calculatePhase3TotalScore } from '../../../src/services/phase3Scoring.js'
+import { PHASE3_MATCHES, isPhase3MatchStarted } from '../../../src/services/phase3Bracket.js'
 
 export const config = {
   runtime: 'nodejs',
@@ -147,7 +148,55 @@ export default async function handler(request, response) {
     }
 
     const body = await readJsonBody(request)
-    const phase3_predictions = normalizePredictions(body.phase3_predictions)
+    const incomingPredictions = normalizePredictions(body.phase3_predictions)
+
+    const currentRows = await queryNeon(
+      databaseUrl,
+      `
+      SELECT phase3_predictions
+      FROM public.user_predictions
+      WHERE user_id = $1
+      LIMIT 1
+      `,
+      [payload.sub]
+    )
+
+    const existingPredictions = currentRows.length
+      ? normalizePredictions(currentRows[0].phase3_predictions)
+      : {}
+
+    const mergedPredictions = {}
+
+    for (const match of PHASE3_MATCHES) {
+      const matchIdStr = String(match.id)
+      const existing = existingPredictions[matchIdStr] || {}
+      const incoming = incomingPredictions[matchIdStr] || {}
+
+      if (isPhase3MatchStarted(match)) {
+        // Locked: keep existing
+        mergedPredictions[matchIdStr] = {
+          mandante: String(existing.mandante ?? existing.teamA ?? ''),
+          visitante: String(existing.visitante ?? existing.teamB ?? ''),
+          placarM: existing.placarM === null || existing.placarM === undefined ? (existing.scoreA === null || existing.scoreA === undefined ? '' : String(existing.scoreA)) : String(existing.placarM),
+          placarV: existing.placarV === null || existing.placarV === undefined ? (existing.scoreB === null || existing.scoreB === undefined ? '' : String(existing.scoreB)) : String(existing.placarV),
+          winner: existing.winner === 'A' || existing.winner === 'B' ? existing.winner : '',
+        }
+      } else {
+        // Allowed: accept incoming
+        const mandante = incoming.mandante ?? incoming.teamA ?? '';
+        const visitante = incoming.visitante ?? incoming.teamB ?? '';
+        const placarM = incoming.placarM ?? incoming.scoreA ?? '';
+        const placarV = incoming.placarV ?? incoming.scoreB ?? '';
+
+        mergedPredictions[matchIdStr] = {
+          mandante: String(mandante),
+          visitante: String(visitante),
+          placarM: placarM === null || placarM === undefined ? '' : String(placarM),
+          placarV: placarV === null || placarV === undefined ? '' : String(placarV),
+          winner: incoming.winner === 'A' || incoming.winner === 'B' ? incoming.winner : '',
+        }
+      }
+    }
 
     const rows = await queryNeon(
       databaseUrl,
@@ -159,10 +208,10 @@ export default async function handler(request, response) {
           updated_at = now()
       RETURNING phase3_predictions
     `,
-      [payload.sub, JSON.stringify(phase3_predictions)]
+      [payload.sub, JSON.stringify(mergedPredictions)]
     )
 
-    const savedPredictions = rows.length ? normalizePredictions(rows[0].phase3_predictions) : phase3_predictions
+    const savedPredictions = rows.length ? normalizePredictions(rows[0].phase3_predictions) : mergedPredictions
 
     try {
       await syncPhase3Score(databaseUrl, payload.sub, savedPredictions)

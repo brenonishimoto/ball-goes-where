@@ -5,30 +5,32 @@ import {
   PHASE3_MATCHES,
   PHASE3_ROUNDS,
   normalizePhase3Predictions,
+  isPhase3MatchStarted,
 } from '../../services/phase3Bracket';
 import { INITIAL_KNOCKOUT_GAMES, resolveKnockoutGames } from '../../services/mataMataService';
 import { PHASE3_RESULTS } from '../../services/phase3Results';
 import { calculatePhase3MatchScore, calculatePhase3TotalScore, calculatePhase3SlamsCount } from '../../services/phase3Scoring';
 import { phase3Service } from '../../services/phase3Service';
+import Flag from '../../components/Flag/Flag';
 import './phase3.scss';
 
 const LOCAL_STORAGE_KEY = 'phase3-predictions';
 
 const isFilledMatch = (prediction) => (
-  prediction?.teamA?.trim()
-  && prediction?.teamB?.trim()
-  && prediction?.scoreA !== ''
-  && prediction?.scoreB !== ''
+  prediction?.mandante?.trim()
+  && prediction?.visitante?.trim()
+  && prediction?.placarM !== ''
+  && prediction?.placarV !== ''
   && prediction?.winner
 );
 
 const formatOfficialResult = (official) => {
-  if (!official?.teamA || !official?.teamB || official.scoreA === null || official.scoreB === null) {
+  if (!official?.mandante || !official?.visitante || official.placarM === null || official.placarV === null) {
     return 'Resultado oficial pendente';
   }
 
-  const decidedOnPenalties = Number(official.scoreA) === Number(official.scoreB);
-  return `${official.teamA} ${official.scoreA} x ${official.scoreB} ${official.teamB}${decidedOnPenalties ? ' (pen.)' : ''}`;
+  const decidedOnPenalties = Number(official.placarM) === Number(official.placarV);
+  return `${official.mandante} ${official.placarM} x ${official.placarV} ${official.visitante}${decidedOnPenalties ? ' (pen.)' : ''}`;
 };
 
 export default function Phase3Page() {
@@ -63,6 +65,17 @@ export default function Phase3Page() {
     []
   );
 
+  const sortedMatches = useMemo(() => {
+    return [...PHASE3_MATCHES].sort((a, b) => {
+      const dateA = a.date.split('/').reverse().join('/');
+      const dateB = b.date.split('/').reverse().join('/');
+      if (dateA !== dateB) {
+        return dateA.localeCompare(dateB);
+      }
+      return a.id - b.id;
+    });
+  }, []);
+
   const formatSlotLabel = useCallback((slot) => {
     const previousMatch = slot.match(/^(Vencedor|Perdedor) Jogo (\d+)$/);
 
@@ -88,22 +101,22 @@ export default function Phase3Page() {
         const fixedTeamA = knockoutMatch?.mandante || '';
         const fixedTeamB = knockoutMatch?.visitante || '';
 
-        if (prediction.teamA !== fixedTeamA) {
-          prediction.teamA = fixedTeamA;
+        if (prediction.mandante !== fixedTeamA) {
+          prediction.mandante = fixedTeamA;
           changed = true;
         }
 
-        if (prediction.teamB !== fixedTeamB) {
-          prediction.teamB = fixedTeamB;
+        if (prediction.visitante !== fixedTeamB) {
+          prediction.visitante = fixedTeamB;
           changed = true;
         }
 
-        if (prediction.winner === 'A' && !prediction.teamA) {
+        if (prediction.winner === 'A' && !prediction.mandante) {
           prediction.winner = '';
           changed = true;
         }
 
-        if (prediction.winner === 'B' && !prediction.teamB) {
+        if (prediction.winner === 'B' && !prediction.visitante) {
           prediction.winner = '';
           changed = true;
         }
@@ -150,6 +163,12 @@ export default function Phase3Page() {
   }, [token, user?.id]);
 
   const updatePrediction = (matchId, field, value) => {
+    const match = matchById.get(matchId);
+    if (isPhase3MatchStarted(match)) {
+      pushToast({ type: 'error', message: 'Esse jogo já começou. Não é possível alterar o palpite.' });
+      return;
+    }
+
     setPredictions((current) => {
       const normalized = normalizePhase3Predictions(current);
       const updated = {
@@ -160,14 +179,13 @@ export default function Phase3Page() {
         },
       };
 
-      if (field === 'scoreA' || field === 'scoreB') {
-        const scoreA = field === 'scoreA' ? value : updated[matchId].scoreA;
-        const scoreB = field === 'scoreB' ? value : updated[matchId].scoreB;
+      if (field === 'placarM' || field === 'placarV') {
+        const placarM = field === 'placarM' ? value : updated[matchId].placarM;
+        const placarV = field === 'placarV' ? value : updated[matchId].placarV;
 
-        if (scoreA !== '' && scoreB !== '' && Number(scoreA) !== Number(scoreB)) {
-          updated[matchId].winner = Number(scoreA) > Number(scoreB) ? 'A' : 'B';
+        if (placarM !== '' && placarV !== '' && Number(placarM) !== Number(placarV)) {
+          updated[matchId].winner = Number(placarM) > Number(placarV) ? 'A' : 'B';
         }
-
       }
 
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
@@ -248,17 +266,20 @@ export default function Phase3Page() {
 
       <section className="phase3-scores-wrap">
         <div className="phase3-match-grid">
-          {PHASE3_MATCHES.filter((match) => match.round === activeRound).map((match) => {
+          {sortedMatches.filter((match) => match.round === activeRound).map((match) => {
             const prediction = predictions[match.id];
             const official = PHASE3_RESULTS[match.id];
             const score = calculatePhase3MatchScore(prediction, official);
+            const started = isPhase3MatchStarted(match);
 
             return (
-              <article className="phase3-match-card" key={match.id}>
+              <article className={`phase3-match-card ${started ? 'is-started' : ''}`} key={match.id}>
               <header className="phase3-match-header">
                 <div>
-                  <span className="phase3-match-kicker">{match.date}</span>
-                  <h2>{match.date} - {match.city}</h2>
+                  <h2>
+                    {match.date}{match.hora ? ` - ${match.hora}` : ''} - {match.city}
+                    {started && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginLeft: '0.5rem', fontWeight: 'bold' }}>(Iniciado)</span>}
+                  </h2>
                 </div>
                 <span className={`phase3-match-points phase3-match-points-${score.status}`}>
                   {score.points} pts
@@ -269,30 +290,38 @@ export default function Phase3Page() {
                 <div className="phase3-team-row">
                   <label>
                     <span>{formatSlotLabel(match.slotA)}</span>
-                    <div className="phase3-team-value">{prediction.teamA || 'A definir'}</div>
+                    <div className="phase3-team-value" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      {prediction.mandante && <Flag country={prediction.mandante} size="sm" />}
+                      <span>{prediction.mandante || 'A definir'}</span>
+                    </div>
                   </label>
                   <input
                     className="phase3-score-input"
                     type="number"
                     min="0"
-                    value={prediction.scoreA}
-                    onChange={(event) => updatePrediction(match.id, 'scoreA', event.target.value)}
-                    aria-label={`Placar de ${prediction.teamA || match.slotA}`}
+                    value={prediction.placarM}
+                    disabled={started}
+                    onChange={(event) => updatePrediction(match.id, 'placarM', event.target.value)}
+                    aria-label={`Placar de ${prediction.mandante || match.slotA}`}
                   />
                 </div>
 
                 <div className="phase3-team-row">
                   <label>
                     <span>{formatSlotLabel(match.slotB)}</span>
-                    <div className="phase3-team-value">{prediction.teamB || 'A definir'}</div>
+                    <div className="phase3-team-value" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      {prediction.visitante && <Flag country={prediction.visitante} size="sm" />}
+                      <span>{prediction.visitante || 'A definir'}</span>
+                    </div>
                   </label>
                   <input
                     className="phase3-score-input"
                     type="number"
                     min="0"
-                    value={prediction.scoreB}
-                    onChange={(event) => updatePrediction(match.id, 'scoreB', event.target.value)}
-                    aria-label={`Placar de ${prediction.teamB || match.slotB}`}
+                    value={prediction.placarV}
+                    disabled={started}
+                    onChange={(event) => updatePrediction(match.id, 'placarV', event.target.value)}
+                    aria-label={`Placar de ${prediction.visitante || match.slotB}`}
                   />
                 </div>
               </div>
@@ -303,16 +332,22 @@ export default function Phase3Page() {
                   <button
                     type="button"
                     className={prediction.winner === 'A' ? 'is-active' : ''}
+                    disabled={started}
                     onClick={() => updatePrediction(match.id, 'winner', 'A')}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
                   >
-                    {prediction.teamA || 'Time A'}
+                    {prediction.mandante && <Flag country={prediction.mandante} size="sm" />}
+                    <span>{prediction.mandante || 'Time A'}</span>
                   </button>
                   <button
                     type="button"
                     className={prediction.winner === 'B' ? 'is-active' : ''}
+                    disabled={started}
                     onClick={() => updatePrediction(match.id, 'winner', 'B')}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
                   >
-                    {prediction.teamB || 'Time B'}
+                    {prediction.visitante && <Flag country={prediction.visitante} size="sm" />}
+                    <span>{prediction.visitante || 'Time B'}</span>
                   </button>
                 </div>
               </div>

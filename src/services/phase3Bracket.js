@@ -8,22 +8,22 @@ export const PHASE3_ROUNDS = [
 ];
 
 export const PHASE3_MATCHES = [
-  { id: 73, round: 'round32', date: '29/06', city: 'Foxborough', slotA: 'Vencedor Grupo B', slotB: '3o Grupo A/D/C/F/H', next: 89 },
-  { id: 74, round: 'round32', date: '30/06', city: 'East Rutherford', slotA: 'Vencedor Grupo I', slotB: '3o Grupo C/D/F/G/H', next: 90 },
-  { id: 75, round: 'round32', date: '28/06', city: 'Inglewood', slotA: '2o Grupo A', slotB: '2o Grupo B', next: 89 },
-  { id: 76, round: 'round32', date: '29/06', city: 'Guadalupe', slotA: 'Vencedor Grupo E', slotB: '2o Grupo C', next: 90 },
-  { id: 77, round: 'round32', date: '02/07', city: 'Toronto', slotA: '2o Grupo K', slotB: '2o Grupo L', next: 91 },
-  { id: 78, round: 'round32', date: '02/07', city: 'Inglewood', slotA: 'Vencedor Grupo H', slotB: '2o Grupo J', next: 91 },
-  { id: 79, round: 'round32', date: '01/07', city: 'Santa Clara', slotA: 'Vencedor Grupo D', slotB: '3o Grupo B/E/F/I/J', next: 92 },
-  { id: 80, round: 'round32', date: '01/07', city: 'Seattle', slotA: 'Vencedor Grupo G', slotB: '3o Grupo A/E/H/I/J', next: 92 },
-  { id: 81, round: 'round32', date: '29/06', city: 'Houston', slotA: 'Vencedor Grupo C', slotB: '2o Grupo F', next: 93 },
-  { id: 82, round: 'round32', date: '30/06', city: 'Arlington', slotA: '2o Grupo E', slotB: '2o Grupo I', next: 93 },
-  { id: 83, round: 'round32', date: '30/06', city: 'Mexico City', slotA: 'Vencedor Grupo A', slotB: '3o Grupo C/E/F/H/I', next: 94 },
-  { id: 84, round: 'round32', date: '01/07', city: 'Atlanta', slotA: 'Vencedor Grupo L', slotB: '3o Grupo D/H/I/J/K', next: 94 },
-  { id: 85, round: 'round32', date: '03/07', city: 'Miami Gardens', slotA: 'Vencedor Grupo J', slotB: '2o Grupo H', next: 95 },
-  { id: 86, round: 'round32', date: '03/07', city: 'Arlington', slotA: '2o Grupo D', slotB: '2o Grupo G', next: 95 },
-  { id: 87, round: 'round32', date: '02/07', city: 'Vancouver', slotA: 'Vencedor Grupo F', slotB: '3o Grupo C/G/I/J', next: 96 },
-  { id: 88, round: 'round32', date: '03/07', city: 'Kansas City', slotA: 'Vencedor Grupo K', slotB: '3o Grupo D/E/I/J/L', next: 96 },
+  { id: 73, round: 'round32', date: '03/07', hora: '00h00', city: 'Foxborough', slotA: 'Vencedor Grupo B', slotB: '3o Grupo A/D/C/F/H', next: 89 },
+  { id: 74, round: 'round32', date: '30/06', hora: '18h00', city: 'East Rutherford', slotA: 'Vencedor Grupo I', slotB: '3o Grupo C/D/F/G/H', next: 90 },
+  { id: 75, round: 'round32', date: '28/06', hora: '16h00', city: 'Inglewood', slotA: '2o Grupo A', slotB: '2o Grupo B', next: 89 },
+  { id: 76, round: 'round32', date: '29/06', hora: '17h30', city: 'Guadalupe', slotA: 'Vencedor Grupo E', slotB: '2o Grupo C', next: 90 },
+  { id: 77, round: 'round32', date: '02/07', hora: '20h00', city: 'Toronto', slotA: '2o Grupo K', slotB: '2o Grupo L', next: 91 },
+  { id: 78, round: 'round32', date: '02/07', hora: '16h00', city: 'Inglewood', slotA: 'Vencedor Grupo H', slotB: '2o Grupo J', next: 91 },
+  { id: 79, round: 'round32', date: '01/07', hora: '21h00', city: 'Santa Clara', slotA: 'Vencedor Grupo D', slotB: '3o Grupo B/E/F/I/J', next: 92 },
+  { id: 80, round: 'round32', date: '01/07', hora: '17h00', city: 'Seattle', slotA: 'Vencedor Grupo G', slotB: '3o Grupo A/E/H/I/J', next: 92 },
+  { id: 81, round: 'round32', date: '29/06', hora: '14h00', city: 'Houston', slotA: 'Vencedor Grupo C', slotB: '2o Grupo F', next: 93 },
+  { id: 82, round: 'round32', date: '30/06', hora: '14h00', city: 'Arlington', slotA: '2o Grupo E', slotB: '2o Grupo I', next: 93 },
+  { id: 83, round: 'round32', date: '30/06', hora: '22h00', city: 'Mexico City', slotA: 'Vencedor Grupo A', slotB: '3o Grupo C/E/F/H/I', next: 94 },
+  { id: 84, round: 'round32', date: '01/07', hora: '13h00', city: 'Atlanta', slotA: 'Vencedor Grupo L', slotB: '3o Grupo D/H/I/J/K', next: 94 },
+  { id: 85, round: 'round32', date: '03/07', hora: '19h00', city: 'Miami Gardens', slotA: 'Vencedor Grupo J', slotB: '2o Grupo H', next: 95 },
+  { id: 86, round: 'round32', date: '03/07', hora: '15h00', city: 'Arlington', slotA: '2o Grupo D', slotB: '2o Grupo G', next: 95 },
+  { id: 87, round: 'round32', date: '29/06', hora: '22h00', city: 'Vancouver', slotA: 'Vencedor Grupo F', slotB: '3o Grupo C/G/I/J', next: 96 },
+  { id: 88, round: 'round32', date: '03/07', hora: '22h30', city: 'Kansas City', slotA: 'Vencedor Grupo K', slotB: '3o Grupo D/E/I/J/L', next: 96 },
 
   { id: 89, round: 'round16', date: '04/07', city: 'Philadelphia', slotA: 'Vencedor Jogo 73', slotB: 'Vencedor Jogo 75', next: 97 },
   { id: 90, round: 'round16', date: '04/07', city: 'Houston', slotA: 'Vencedor Jogo 74', slotB: 'Vencedor Jogo 76', next: 97 },
@@ -46,10 +46,10 @@ export const PHASE3_MATCHES = [
 ];
 
 export const EMPTY_PHASE3_MATCH = {
-  teamA: '',
-  teamB: '',
-  scoreA: '',
-  scoreB: '',
+  mandante: '',
+  visitante: '',
+  placarM: '',
+  placarV: '',
   winner: '',
 };
 
@@ -72,14 +72,39 @@ export const normalizePhase3Predictions = (value) => {
   return PHASE3_MATCHES.reduce((acc, match) => {
     const prediction = source[match.id] || source[String(match.id)] || {};
 
+    const mandante = prediction.mandante ?? prediction.teamA ?? '';
+    const visitante = prediction.visitante ?? prediction.teamB ?? '';
+    const placarM = prediction.placarM ?? prediction.scoreA ?? '';
+    const placarV = prediction.placarV ?? prediction.scoreB ?? '';
+
     acc[match.id] = {
-      teamA: String(prediction.teamA ?? ''),
-      teamB: String(prediction.teamB ?? ''),
-      scoreA: prediction.scoreA === null || prediction.scoreA === undefined ? '' : String(prediction.scoreA),
-      scoreB: prediction.scoreB === null || prediction.scoreB === undefined ? '' : String(prediction.scoreB),
+      mandante: String(mandante),
+      visitante: String(visitante),
+      placarM: placarM === null || placarM === undefined ? '' : String(placarM),
+      placarV: placarV === null || placarV === undefined ? '' : String(placarV),
       winner: prediction.winner === 'A' || prediction.winner === 'B' ? prediction.winner : '',
     };
 
     return acc;
   }, {});
+};
+
+export const isPhase3MatchStarted = (match) => {
+  if (!match || !match.date) return false;
+
+  const [day, month] = match.date.split('/').map(Number);
+  let hour = 0;
+  let minute = 0;
+
+  if (match.hora) {
+    const timeMatch = match.hora.match(/(\d{2})h(\d{2})?/);
+    if (timeMatch) {
+      hour = Number(timeMatch[1]);
+      minute = timeMatch[2] ? Number(timeMatch[2]) : 0;
+    }
+  }
+
+  // Compara com a data/hora local
+  const matchDate = new Date(2026, month - 1, day, hour, minute);
+  return Date.now() >= matchDate.getTime();
 };

@@ -5,6 +5,9 @@ import path from 'path'
 import crypto from 'crypto'
 import { INITIAL_GAMES } from './src/services/gameService.js'
 import { scoringService } from './src/services/scoringService.js'
+import { PHASE3_RESULTS } from './src/services/phase3Results.js'
+import { calculatePhase3TotalScore } from './src/services/phase3Scoring.js'
+import { PHASE3_MATCHES, isPhase3MatchStarted } from './src/services/phase3Bracket.js'
 
 const readJsonBody = async (request) => {
   const chunks = []
@@ -649,6 +652,174 @@ const neonApiPlugin = (env) => ({
         }
       }
 
+      if (requestUrl.pathname === '/api/predictions/phase3/me') {
+        const sendJson = (statusCode, payload) => {
+          response.statusCode = statusCode
+          response.setHeader('Content-Type', 'application/json; charset=utf-8')
+          response.end(JSON.stringify(payload))
+        }
+
+        if (request.method === 'OPTIONS') {
+          response.statusCode = 204
+          response.setHeader('Access-Control-Allow-Origin', '*')
+          response.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+          response.setHeader('Access-Control-Allow-Methods', 'GET,PUT,OPTIONS')
+          response.end()
+          return
+        }
+
+        const databaseUrl = env.DATABASE_URL || process.env.DATABASE_URL
+
+        if (!databaseUrl) {
+          sendJson(500, { error: 'DATABASE_URL não configurado.' })
+          return
+        }
+
+        const authSecret = env.AUTH_SECRET || process.env.AUTH_SECRET || 'dev-auth-secret-change-this'
+
+        try {
+          const bearerToken = getBearerToken(request)
+          const payload = verifyAuthToken(bearerToken, authSecret)
+
+          if (!payload?.sub) {
+            sendJson(401, { error: 'Sessão inválida ou expirada.' })
+            return
+          }
+
+          if (request.method === 'GET') {
+            const rows = await queryNeon(
+              databaseUrl,
+              `
+              SELECT phase3_predictions
+              FROM public.user_predictions
+              WHERE user_id = $1
+              LIMIT 1
+            `,
+              [payload.sub]
+            )
+
+            const phase3_predictions = rows.length ? normalizePredictions(rows[0].phase3_predictions) : {}
+            sendJson(200, { phase3_predictions })
+            return
+          }
+
+          if (request.method === 'PUT') {
+            const body = await readJsonBody(request)
+            const incomingPredictions = normalizePredictions(body.phase3_predictions)
+
+            const currentRows = await queryNeon(
+              databaseUrl,
+              `
+              SELECT phase3_predictions
+              FROM public.user_predictions
+              WHERE user_id = $1
+              LIMIT 1
+              `,
+              [payload.sub]
+            )
+
+            const existingPredictions = currentRows.length
+              ? normalizePredictions(currentRows[0].phase3_predictions)
+              : {}
+
+            const mergedPredictions = {}
+
+            for (const match of PHASE3_MATCHES) {
+              const matchIdStr = String(match.id)
+              const existing = existingPredictions[matchIdStr] || {}
+              const incoming = incomingPredictions[matchIdStr] || {}
+
+              if (isPhase3MatchStarted(match)) {
+                // Locked: keep existing
+                mergedPredictions[matchIdStr] = {
+                  mandante: String(existing.mandante ?? existing.teamA ?? ''),
+                  visitante: String(existing.visitante ?? existing.teamB ?? ''),
+                  placarM: existing.placarM === null || existing.placarM === undefined ? (existing.scoreA === null || existing.scoreA === undefined ? '' : String(existing.scoreA)) : String(existing.placarM),
+                  placarV: existing.placarV === null || existing.placarV === undefined ? (existing.scoreB === null || existing.scoreB === undefined ? '' : String(existing.scoreB)) : String(existing.placarV),
+                  winner: existing.winner === 'A' || existing.winner === 'B' ? existing.winner : '',
+                }
+              } else {
+                // Allowed: accept incoming
+                const mandante = incoming.mandante ?? incoming.teamA ?? '';
+                const visitante = incoming.visitante ?? incoming.teamB ?? '';
+                const placarM = incoming.placarM ?? incoming.scoreA ?? '';
+                const placarV = incoming.placarV ?? incoming.scoreB ?? '';
+
+                mergedPredictions[matchIdStr] = {
+                  mandante: String(mandante),
+                  visitante: String(visitante),
+                  placarM: placarM === null || placarM === undefined ? '' : String(placarM),
+                  placarV: placarV === null || placarV === undefined ? '' : String(placarV),
+                  winner: incoming.winner === 'A' || incoming.winner === 'B' ? incoming.winner : '',
+                }
+              }
+            }
+
+            const rows = await queryNeon(
+              databaseUrl,
+              `
+              INSERT INTO public.user_predictions (user_id, phase3_predictions, updated_at)
+              VALUES ($1, $2::jsonb, now())
+              ON CONFLICT (user_id) DO UPDATE
+              SET phase3_predictions = EXCLUDED.phase3_predictions,
+                  updated_at = now()
+              RETURNING phase3_predictions
+            `,
+              [payload.sub, JSON.stringify(mergedPredictions)]
+            )
+
+            const savedPredictions = rows.length ? normalizePredictions(rows[0].phase3_predictions) : mergedPredictions
+
+            try {
+              const phase3Score = calculatePhase3TotalScore(savedPredictions, PHASE3_RESULTS)
+              const currentScoreRows = await queryNeon(
+                databaseUrl,
+                `
+                SELECT phase1_score, phase2_score
+                FROM public.user_scores
+                WHERE user_id = $1
+                LIMIT 1
+              `,
+                [payload.sub]
+              )
+
+              const phase1Score = Number(currentScoreRows[0]?.phase1_score) || 0
+              const phase2Score = Number(currentScoreRows[0]?.phase2_score) || 0
+              const totalScore = phase1Score + phase2Score + phase3Score
+
+              await queryNeon(
+                databaseUrl,
+                `
+                INSERT INTO public.user_scores (user_id, total_score, phase1_score, phase2_score, phase3_score, calculated_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, now(), now())
+                ON CONFLICT (user_id) DO UPDATE
+                SET total_score = EXCLUDED.total_score,
+                    phase1_score = EXCLUDED.phase1_score,
+                    phase2_score = EXCLUDED.phase2_score,
+                    phase3_score = EXCLUDED.phase3_score,
+                    calculated_at = now(),
+                    updated_at = now()
+              `,
+                [payload.sub, totalScore, phase1Score, phase2Score, phase3Score]
+              )
+            } catch (scoreError) {
+              console.error('[neon-api-plugin] Failed to sync phase3 score:', scoreError)
+            }
+
+            sendJson(200, { phase3_predictions: savedPredictions })
+            return
+          }
+
+          sendJson(405, { error: 'Método não permitido.' })
+          return
+        } catch (error) {
+          sendJson(500, {
+            error: error instanceof Error ? error.message : 'Erro ao consultar palpites da Fase 3.',
+          })
+          return
+        }
+      }
+
       if (requestUrl.pathname === '/api/ranking/leaderboard') {
         const sendJson = (statusCode, payload) => {
           response.statusCode = statusCode
@@ -758,22 +929,41 @@ const neonApiPlugin = (env) => ({
           `
           )
 
+          const currentScores = await queryNeon(
+            databaseUrl,
+            `
+            SELECT user_id, phase1_score
+            FROM public.user_scores
+          `
+          )
+
+          const currentScoresByUserId = new Map(
+            currentScores.map((row) => [row.user_id, row])
+          )
+
           const predictions = await queryNeon(
             databaseUrl,
             `
-            SELECT user_id, phase2_predictions
+            SELECT user_id, phase2_predictions, phase3_predictions
             FROM public.user_predictions
           `
           )
 
           const predictionsByUserId = new Map(
-            predictions.map((row) => [row.user_id, normalizeGames(row.phase2_predictions)])
+            predictions.map((row) => [
+              row.user_id,
+              {
+                games: normalizeGames(row.phase2_predictions),
+                phase3Predictions: normalizePredictions(row.phase3_predictions),
+              }
+            ])
           )
 
           let refreshed = 0
 
           for (const user of users) {
-            const savedGames = predictionsByUserId.get(user.id) || []
+            const predictionRow = predictionsByUserId.get(user.id)
+            const savedGames = predictionRow ? predictionRow.games : []
             const enrichedGames = savedGames.map((game) => {
               const officialGame = officialGamesById.get(game.id)
               if (!officialGame) return game
@@ -786,24 +976,34 @@ const neonApiPlugin = (env) => ({
             })
 
             const scorePayload = scoringService.calculateScorePayload(enrichedGames)
+            const currentScore = currentScoresByUserId.get(user.id)
+
+            const phase1Score = Number(currentScore?.phase1_score) || 0
+            const phase2Score = Number(scorePayload.phase2Score) || 0
+            const phase3Score = predictionRow
+              ? calculatePhase3TotalScore(predictionRow.phase3Predictions, PHASE3_RESULTS)
+              : 0
+            const totalScore = phase1Score + phase2Score + phase3Score
 
             await queryNeon(
               databaseUrl,
               `
-              INSERT INTO public.user_scores (user_id, total_score, phase1_score, phase2_score, calculated_at, updated_at)
-              VALUES ($1, $2, $3, $4, now(), now())
+              INSERT INTO public.user_scores (user_id, total_score, phase1_score, phase2_score, phase3_score, calculated_at, updated_at)
+              VALUES ($1, $2, $3, $4, $5, now(), now())
               ON CONFLICT (user_id) DO UPDATE
               SET total_score = EXCLUDED.total_score,
                   phase1_score = EXCLUDED.phase1_score,
                   phase2_score = EXCLUDED.phase2_score,
+                  phase3_score = EXCLUDED.phase3_score,
                   calculated_at = now(),
                   updated_at = now()
             `,
               [
                 user.id,
-                Number(scorePayload.totalScore) || 0,
-                Number(scorePayload.phase1Score) || 0,
-                Number(scorePayload.phase2Score) || 0,
+                totalScore,
+                phase1Score,
+                phase2Score,
+                phase3Score,
               ]
             )
 
