@@ -94,8 +94,8 @@ const buildInitialGames = () => ([
   { id: 68, mandante: 'Croácia', visitante: 'Gana', placarM: null, placarV: null, officialM: 2, officialV: 1, fase: 'Grupo L', rodada: 3, data: 'Sáb, 27/06/2026', hora: '18h00' },
   { id: 69, mandante: 'Colômbia', visitante: 'Portugal', placarM: null, placarV: null, officialM: 0, officialV: 0, fase: 'Grupo K', rodada: 3, data: 'Sáb, 27/06/2026', hora: '20h30' },
   { id: 70, mandante: 'Rep. Democrática do Congo', visitante: 'Uzbequistão', placarM: null, placarV: null, officialM: 3, officialV: 1, fase: 'Grupo K', rodada: 3, data: 'Sáb, 27/06/2026', hora: '20h30' },
-  { id: 71, mandante: 'Argélia', visitante: 'Áustria', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo J', rodada: 3, data: 'Sáb, 27/06/2026', hora: '23h00' },
-  { id: 72, mandante: 'Jordânia', visitante: 'Argentina', placarM: null, placarV: null, officialM: null, officialV: null, fase: 'Grupo J', rodada: 3, data: 'Sáb, 27/06/2026', hora: '23h00' },
+  { id: 71, mandante: 'Argélia', visitante: 'Áustria', placarM: null, placarV: null, officialM: 3, officialV: 3, fase: 'Grupo J', rodada: 3, data: 'Sáb, 27/06/2026', hora: '23h00' },
+  { id: 72, mandante: 'Jordânia', visitante: 'Argentina', placarM: null, placarV: null, officialM: 1, officialV: 3, fase: 'Grupo J', rodada: 3, data: 'Sáb, 27/06/2026', hora: '23h00' },
 ]);
 
 export const INITIAL_GAMES = buildInitialGames().map(g => ({
