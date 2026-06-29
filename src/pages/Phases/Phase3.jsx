@@ -278,7 +278,6 @@ export default function Phase3Page() {
                 <div>
                   <h2>
                     {match.date}{match.hora ? ` - ${match.hora}` : ''} - {match.city}
-                    {started && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginLeft: '0.5rem', fontWeight: 'bold' }}>(Iniciado)</span>}
                   </h2>
                 </div>
                 <span className={`phase3-match-points phase3-match-points-${score.status}`}>
@@ -352,12 +351,55 @@ export default function Phase3Page() {
                 </div>
               </div>
 
-              <footer className="phase3-result">
-                <span>{formatOfficialResult(official)}</span>
-                <span>
-                  Classificado {score.classified ? '+4' : '+0'} | Placar {score.exactScore ? '+3' : '+0'} | Resultado {score.result ? '+1' : '+0'}
-                </span>
-              </footer>
+              {score.status === 'pending' ? (
+                <footer className="phase3-result is-pending">
+                  <span className="result-title">Placar Oficial</span>
+                  <span className="result-pending-tag">Aguardando</span>
+                </footer>
+              ) : (
+                <footer className="phase3-result is-ready">
+                  <div className="result-header">
+                    <span className="result-label">Placar Oficial</span>
+                    {Number(official.placarM) === Number(official.placarV) && (
+                      <span className="penalty-badge">Pênaltis</span>
+                    )}
+                  </div>
+                  <div className="result-scoreboard">
+                    <div className={`result-team ${official.winner === 'A' ? 'is-winner' : ''}`}>
+                      {official.mandante && <Flag country={official.mandante} size="sm" />}
+                      <span className="team-name">{official.mandante}</span>
+                    </div>
+                    <div className="result-score">
+                      <span className="score-num">{official.placarM}</span>
+                      <span className="score-divider">x</span>
+                      <span className="score-num">{official.placarV}</span>
+                    </div>
+                    <div className={`result-team ${official.winner === 'B' ? 'is-winner' : ''}`}>
+                      <span className="team-name">{official.visitante}</span>
+                      {official.visitante && <Flag country={official.visitante} size="sm" />}
+                    </div>
+                  </div>
+                  {Number(official.placarM) === Number(official.placarV) && (
+                    <div className="penalty-winner">
+                      Classificado: <strong>{official.winner === 'A' ? official.mandante : official.visitante}</strong>
+                    </div>
+                  )}
+                  <div className="points-breakdown">
+                    <div className={`breakdown-chip ${score.classified ? 'is-correct' : 'is-incorrect'}`}>
+                      <span className="chip-label">Classificado</span>
+                      <span className="chip-value">{score.classified ? '+4' : '+0'}</span>
+                    </div>
+                    <div className={`breakdown-chip ${score.exactScore ? 'is-correct' : 'is-incorrect'}`}>
+                      <span className="chip-label">Placar</span>
+                      <span className="chip-value">{score.exactScore ? '+3' : '+0'}</span>
+                    </div>
+                    <div className={`breakdown-chip ${score.result ? 'is-correct' : 'is-incorrect'}`}>
+                      <span className="chip-label">Resultado</span>
+                      <span className="chip-value">{score.result ? '+1' : '+0'}</span>
+                    </div>
+                  </div>
+                </footer>
+              )}
               </article>
             );
           })}
