@@ -50,7 +50,7 @@ const KNOCKOUT_OFFICIAL_RESULTS = {
   81: { officialM: 2, officialV: 1, winner: 'A' }, // Brasil x Japão
 
   // Terça-feira, 30 de junho de 2026
-  74: { officialM: null, officialV: null, winner: '' }, // França x Suécia
+  74: { officialM: 3, officialV: 0, winner: 'A' }, // França x Suécia
   82: { officialM: 1, officialV: 2, winner: 'B' }, // Costa do Marfim x Noruega
   83: { officialM: null, officialV: null, winner: '' }, // México x Equador
 
