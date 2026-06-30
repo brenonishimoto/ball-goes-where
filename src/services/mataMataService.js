@@ -51,7 +51,7 @@ const KNOCKOUT_OFFICIAL_RESULTS = {
 
   // Terça-feira, 30 de junho de 2026
   74: { officialM: null, officialV: null, winner: '' }, // França x Suécia
-  82: { officialM: null, officialV: null, winner: '' }, // Costa do Marfim x Noruega
+  82: { officialM: 1, officialV: 2, winner: 'B' }, // Costa do Marfim x Noruega
   83: { officialM: null, officialV: null, winner: '' }, // México x Equador
 
   // Quarta-feira, 1º de julho de 2026
