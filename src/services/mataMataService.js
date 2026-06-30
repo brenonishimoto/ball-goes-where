@@ -46,7 +46,7 @@ const KNOCKOUT_OFFICIAL_RESULTS = {
 
   // Segunda-feira, 29 de junho de 2026
   73: { officialM: null, officialV: null, winner: '' }, // Suíça x Argélia
-  76: { officialM: null, officialV: null, winner: '' }, // Alemanha x Paraguai
+  76: { officialM: 1, officialV: 1, winner: 'B' }, // Alemanha x Paraguai
   81: { officialM: 2, officialV: 1, winner: 'A' }, // Brasil x Japão
 
   // Terça-feira, 30 de junho de 2026
@@ -62,7 +62,7 @@ const KNOCKOUT_OFFICIAL_RESULTS = {
   // Quinta-feira, 2 de julho de 2026
   77: { officialM: null, officialV: null, winner: '' }, // Portugal x Croácia
   78: { officialM: null, officialV: null, winner: '' }, // Espanha x Áustria
-  87: { officialM: null, officialV: null, winner: '' }, // Holanda x Marrocos
+  87: { officialM: 1, officialV: 1, winner: 'B' }, // Holanda x Marrocos
 
   // Sexta-feira, 3 de julho de 2026
   85: { officialM: null, officialV: null, winner: '' }, // Argentina x Cabo Verde
