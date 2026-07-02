@@ -55,8 +55,8 @@ const KNOCKOUT_OFFICIAL_RESULTS = {
   83: { officialM: 2, officialV: 0, winner: 'A' }, // México x Equador
 
   // Quarta-feira, 1º de julho de 2026
-  79: { officialM: null, officialV: null, winner: '' }, // Estados Unidos x Bósnia e Herzegovina
-  80: { officialM: null, officialV: null, winner: '' }, // Bélgica x Senegal
+  79: { officialM: 2, officialV: 0, winner: 'A' }, // Estados Unidos x Bósnia e Herzegovina
+  80: { officialM: 3, officialV: 2, winner: 'A' }, // Bélgica x Senegal
   84: { officialM: 2, officialV: 1, winner: 'A' }, // Inglaterra x Rep. Democrática do Congo
 
   // Quinta-feira, 2 de julho de 2026
