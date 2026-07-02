@@ -61,7 +61,7 @@ const KNOCKOUT_OFFICIAL_RESULTS = {
 
   // Quinta-feira, 2 de julho de 2026
   77: { officialM: null, officialV: null, winner: '' }, // Portugal x Croácia
-  78: { officialM: null, officialV: null, winner: '' }, // Espanha x Áustria
+  78: { officialM: 3, officialV: 0, winner: 'A' }, // Espanha x Áustria
   87: { officialM: 1, officialV: 1, winner: 'B' }, // Holanda x Marrocos
 
   // Sexta-feira, 3 de julho de 2026
