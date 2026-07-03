@@ -68,6 +68,23 @@ const KNOCKOUT_OFFICIAL_RESULTS = {
   85: { officialM: null, officialV: null, winner: '' }, // Argentina x Cabo Verde
   86: { officialM: null, officialV: null, winner: '' }, // Austrália x Egito
   88: { officialM: null, officialV: null, winner: '' }, // Colômbia x Gana
+
+  // Oitavas de final
+  // Sábado, 4 de julho de 2026
+  89: { officialM: null, officialV: null, winner: '' }, // Suíça x Canadá
+  90: { officialM: null, officialV: null, winner: '' }, // França x Paraguai
+
+  // Domingo, 5 de julho de 2026
+  93: { officialM: null, officialV: null, winner: '' }, // Brasil x Noruega
+  94: { officialM: null, officialV: null, winner: '' }, // México x Inglaterra
+
+  // Segunda-feira, 6 de julho de 2026
+  91: { officialM: null, officialV: null, winner: '' }, // Portugal x Espanha
+  92: { officialM: null, officialV: null, winner: '' }, // Estados Unidos x Bélgica
+
+  // Terça-feira, 7 de julho de 2026
+  95: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 85 x Vencedor Jogo 86
+  96: { officialM: null, officialV: null, winner: '' }, // Marrocos x Vencedor Jogo 88
 };
 
 const resolveWinnerSide = (match) => {

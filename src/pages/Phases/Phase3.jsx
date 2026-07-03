@@ -77,17 +77,8 @@ export default function Phase3Page() {
   }, []);
 
   const formatSlotLabel = useCallback((slot) => {
-    const previousMatch = slot.match(/^(Vencedor|Perdedor) Jogo (\d+)$/);
-
-    if (!previousMatch) {
-      return slot;
-    }
-
-    const match = matchById.get(Number(previousMatch[2]));
-    const prefix = previousMatch[1] === 'Vencedor' ? 'Vencedor' : 'Perdedor';
-
-    return match ? `${prefix}: ${match.date} - ${match.city}` : prefix;
-  }, [matchById]);
+    return slot;
+  }, []);
 
   useEffect(() => {
     setPredictions((current) => {
@@ -132,7 +123,7 @@ export default function Phase3Page() {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(nextPredictions));
       return nextPredictions;
     });
-  }, [knockoutById]);
+  }, [knockoutById, predictions]);
 
   const filledMatches = useMemo(
     () => Object.values(predictions).filter(isFilledMatch).length,
