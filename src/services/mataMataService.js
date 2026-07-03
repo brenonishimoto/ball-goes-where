@@ -45,7 +45,7 @@ const KNOCKOUT_OFFICIAL_RESULTS = {
   75: { officialM: 0, officialV: 1, winner: 'B' }, // África do Sul x Canadá
 
   // Segunda-feira, 29 de junho de 2026
-  73: { officialM: null, officialV: null, winner: '' }, // Suíça x Argélia
+  73: { officialM: 2, officialV: 0, winner: 'A' }, // Suíça x Argélia
   76: { officialM: 1, officialV: 1, winner: 'B' }, // Alemanha x Paraguai
   81: { officialM: 2, officialV: 1, winner: 'A' }, // Brasil x Japão
 
