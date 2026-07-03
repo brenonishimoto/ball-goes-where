@@ -8,7 +8,7 @@ export const PHASE3_ROUNDS = [
 ];
 
 export const PHASE3_MATCHES = [
-  { id: 73, round: 'round32', date: '03/07', hora: '00h00', city: 'Foxborough', slotA: 'Vencedor Grupo B', slotB: '3o Grupo A/D/C/F/H', next: 89 },
+  { id: 73, round: 'round32', date: '03/07', hora: '00h00', city: 'Foxborough', slotA: 'Vencedor Grupo B', slotB: '3o Grupo A/D/C/F/H', next: 96 },
   { id: 74, round: 'round32', date: '30/06', hora: '18h00', city: 'East Rutherford', slotA: 'Vencedor Grupo I', slotB: '3o Grupo C/D/F/G/H', next: 90 },
   { id: 75, round: 'round32', date: '28/06', hora: '16h00', city: 'Inglewood', slotA: '2o Grupo A', slotB: '2o Grupo B', next: 89 },
   { id: 76, round: 'round32', date: '29/06', hora: '17h30', city: 'Guadalupe', slotA: 'Vencedor Grupo E', slotB: '2o Grupo C', next: 90 },
@@ -22,17 +22,17 @@ export const PHASE3_MATCHES = [
   { id: 84, round: 'round32', date: '01/07', hora: '13h00', city: 'Atlanta', slotA: 'Vencedor Grupo L', slotB: '3o Grupo D/H/I/J/K', next: 94 },
   { id: 85, round: 'round32', date: '03/07', hora: '19h00', city: 'Miami Gardens', slotA: 'Vencedor Grupo J', slotB: '2o Grupo H', next: 95 },
   { id: 86, round: 'round32', date: '03/07', hora: '15h00', city: 'Arlington', slotA: '2o Grupo D', slotB: '2o Grupo G', next: 95 },
-  { id: 87, round: 'round32', date: '29/06', hora: '22h00', city: 'Vancouver', slotA: 'Vencedor Grupo F', slotB: '3o Grupo C/G/I/J', next: 96 },
+  { id: 87, round: 'round32', date: '29/06', hora: '22h00', city: 'Vancouver', slotA: 'Vencedor Grupo F', slotB: '3o Grupo C/G/I/J', next: 89 },
   { id: 88, round: 'round32', date: '03/07', hora: '22h30', city: 'Kansas City', slotA: 'Vencedor Grupo K', slotB: '3o Grupo D/E/I/J/L', next: 96 },
 
-  { id: 89, round: 'round16', date: '04/07', city: 'Philadelphia', slotA: 'Vencedor Jogo 73', slotB: 'Vencedor Jogo 75', next: 97 },
-  { id: 90, round: 'round16', date: '04/07', city: 'Houston', slotA: 'Vencedor Jogo 74', slotB: 'Vencedor Jogo 76', next: 97 },
-  { id: 91, round: 'round16', date: '06/07', city: 'Arlington', slotA: 'Vencedor Jogo 77', slotB: 'Vencedor Jogo 78', next: 98 },
-  { id: 92, round: 'round16', date: '06/07', city: 'Seattle', slotA: 'Vencedor Jogo 79', slotB: 'Vencedor Jogo 80', next: 98 },
-  { id: 93, round: 'round16', date: '05/07', city: 'East Rutherford', slotA: 'Vencedor Jogo 81', slotB: 'Vencedor Jogo 82', next: 99 },
-  { id: 94, round: 'round16', date: '05/07', city: 'Mexico City', slotA: 'Vencedor Jogo 83', slotB: 'Vencedor Jogo 84', next: 99 },
-  { id: 95, round: 'round16', date: '07/07', city: 'Atlanta', slotA: 'Vencedor Jogo 85', slotB: 'Vencedor Jogo 86', next: 100 },
-  { id: 96, round: 'round16', date: '07/07', city: 'Vancouver', slotA: 'Vencedor Jogo 87', slotB: 'Vencedor Jogo 88', next: 100 },
+  { id: 89, round: 'round16', date: '04/07', hora: '14h00', city: 'Philadelphia', slotA: 'Vencedor Jogo 75', slotB: 'Vencedor Jogo 87', next: 97 },
+  { id: 90, round: 'round16', date: '04/07', hora: '18h00', city: 'Houston', slotA: 'Vencedor Jogo 74', slotB: 'Vencedor Jogo 76', next: 97 },
+  { id: 91, round: 'round16', date: '06/07', hora: '16h00', city: 'Arlington', slotA: 'Vencedor Jogo 77', slotB: 'Vencedor Jogo 78', next: 98 },
+  { id: 92, round: 'round16', date: '06/07', hora: '21h00', city: 'Seattle', slotA: 'Vencedor Jogo 79', slotB: 'Vencedor Jogo 80', next: 98 },
+  { id: 93, round: 'round16', date: '05/07', hora: '17h00', city: 'East Rutherford', slotA: 'Vencedor Jogo 81', slotB: 'Vencedor Jogo 82', next: 99 },
+  { id: 94, round: 'round16', date: '05/07', hora: '21h00', city: 'Mexico City', slotA: 'Vencedor Jogo 83', slotB: 'Vencedor Jogo 84', next: 99 },
+  { id: 95, round: 'round16', date: '07/07', hora: '13h00', city: 'Atlanta', slotA: 'Vencedor Jogo 85', slotB: 'Vencedor Jogo 86', next: 100 },
+  { id: 96, round: 'round16', date: '07/07', hora: '17h00', city: 'Vancouver', slotA: 'Vencedor Jogo 73', slotB: 'Vencedor Jogo 88', next: 100 },
 
   { id: 97, round: 'quarterfinals', date: '09/07', city: 'Foxborough', slotA: 'Vencedor Jogo 89', slotB: 'Vencedor Jogo 90', next: 101 },
   { id: 98, round: 'quarterfinals', date: '10/07', city: 'Inglewood', slotA: 'Vencedor Jogo 91', slotB: 'Vencedor Jogo 92', next: 101 },

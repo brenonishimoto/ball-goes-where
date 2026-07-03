@@ -71,7 +71,7 @@ const KNOCKOUT_OFFICIAL_RESULTS = {
 
   // Oitavas de final
   // Sábado, 4 de julho de 2026
-  89: { officialM: null, officialV: null, winner: '' }, // Suíça x Canadá
+  89: { officialM: null, officialV: null, winner: '' }, // Canadá x Marrocos
   90: { officialM: null, officialV: null, winner: '' }, // França x Paraguai
 
   // Domingo, 5 de julho de 2026
@@ -84,7 +84,7 @@ const KNOCKOUT_OFFICIAL_RESULTS = {
 
   // Terça-feira, 7 de julho de 2026
   95: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 85 x Vencedor Jogo 86
-  96: { officialM: null, officialV: null, winner: '' }, // Marrocos x Vencedor Jogo 88
+  96: { officialM: null, officialV: null, winner: '' }, // Suíça x Vencedor Jogo 88
 };
 
 const resolveWinnerSide = (match) => {
