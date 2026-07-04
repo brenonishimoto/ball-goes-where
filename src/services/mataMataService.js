@@ -65,9 +65,9 @@ const KNOCKOUT_OFFICIAL_RESULTS = {
   87: { officialM: 1, officialV: 1, winner: 'B' }, // Holanda x Marrocos
 
   // Sexta-feira, 3 de julho de 2026
-  85: { officialM: null, officialV: null, winner: '' }, // Argentina x Cabo Verde
-  86: { officialM: null, officialV: null, winner: '' }, // Austrália x Egito
-  88: { officialM: null, officialV: null, winner: '' }, // Colômbia x Gana
+  85: { officialM: 3, officialV: 2, winner: 'A' }, // Argentina x Cabo Verde
+  86: { officialM: 1, officialV: 1, winner: 'B' }, // Austrália x Egito
+  88: { officialM: 1, officialV: 0, winner: 'A' }, // Colômbia x Gana
 
   // Oitavas de final
   // Sábado, 4 de julho de 2026
