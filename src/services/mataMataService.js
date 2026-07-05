@@ -71,8 +71,8 @@ const KNOCKOUT_OFFICIAL_RESULTS = {
 
   // Oitavas de final
   // Sábado, 4 de julho de 2026
-  89: { officialM: null, officialV: null, winner: '' }, // Canadá x Marrocos
-  90: { officialM: null, officialV: null, winner: '' }, // França x Paraguai
+  89: { officialM: 0, officialV: 3, winner: 'B' }, // Canadá x Marrocos
+  90: { officialM: 1, officialV: 0, winner: 'A' }, // França x Paraguai
 
   // Domingo, 5 de julho de 2026
   93: { officialM: null, officialV: null, winner: '' }, // Brasil x Noruega
