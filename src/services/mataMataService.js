@@ -75,8 +75,8 @@ const KNOCKOUT_OFFICIAL_RESULTS = {
   90: { officialM: 1, officialV: 0, winner: 'A' }, // França x Paraguai
 
   // Domingo, 5 de julho de 2026
-  93: { officialM: null, officialV: null, winner: '' }, // Brasil x Noruega
-  94: { officialM: null, officialV: null, winner: '' }, // México x Inglaterra
+  93: { officialM: 1, officialV: 2, winner: 'B' }, // Brasil x Noruega
+  94: { officialM: 2, officialV: 3, winner: 'B' }, // México x Inglaterra
 
   // Segunda-feira, 6 de julho de 2026
   91: { officialM: null, officialV: null, winner: '' }, // Portugal x Espanha
