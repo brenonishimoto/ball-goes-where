@@ -84,7 +84,7 @@ const KNOCKOUT_OFFICIAL_RESULTS = {
 
   // Terça-feira, 7 de julho de 2026
   95: { officialM: 3, officialV: 2, winner: 'A' }, // Argentina x Egito
-  96: { officialM: null, officialV: null, winner: '' }, // Suíça x Colômbia
+  96: { officialM: 0, officialV: 0, winner: 'A' }, // Suíça x Colômbia
 
   // Quartas de final
   97: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 89 x Vencedor Jogo 90
