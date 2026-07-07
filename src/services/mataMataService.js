@@ -79,12 +79,28 @@ const KNOCKOUT_OFFICIAL_RESULTS = {
   94: { officialM: 2, officialV: 3, winner: 'B' }, // México x Inglaterra
 
   // Segunda-feira, 6 de julho de 2026
-  91: { officialM: null, officialV: null, winner: '' }, // Portugal x Espanha
-  92: { officialM: null, officialV: null, winner: '' }, // Estados Unidos x Bélgica
+  91: { officialM: 0, officialV: 1, winner: 'B' }, // Portugal x Espanha
+  92: { officialM: 1, officialV: 4, winner: 'B' }, // Estados Unidos x Bélgica
 
   // Terça-feira, 7 de julho de 2026
-  95: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 85 x Vencedor Jogo 86
-  96: { officialM: null, officialV: null, winner: '' }, // Suíça x Vencedor Jogo 88
+  95: { officialM: 3, officialV: 2, winner: 'A' }, // Argentina x Egito
+  96: { officialM: null, officialV: null, winner: '' }, // Suíça x Colômbia
+
+  // Quartas de final
+  97: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 89 x Vencedor Jogo 90
+  98: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 91 x Vencedor Jogo 92
+  99: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 93 x Vencedor Jogo 94
+  100: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 95 x Vencedor Jogo 96
+
+  // Semifinais
+  101: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 97 x Vencedor Jogo 98
+  102: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 99 x Vencedor Jogo 100
+
+  // 3º Lugar
+  104: { officialM: null, officialV: null, winner: '' }, // Perdedor Jogo 101 x Perdedor Jogo 102
+
+  // Final
+  103: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 101 x Vencedor Jogo 102
 };
 
 const resolveWinnerSide = (match) => {
