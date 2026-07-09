@@ -34,10 +34,10 @@ export const PHASE3_MATCHES = [
   { id: 95, round: 'round16', date: '07/07', hora: '13h00', city: 'Atlanta', slotA: 'Vencedor Jogo 85', slotB: 'Vencedor Jogo 86', next: 100 },
   { id: 96, round: 'round16', date: '07/07', hora: '17h00', city: 'Vancouver', slotA: 'Vencedor Jogo 73', slotB: 'Vencedor Jogo 88', next: 100 },
 
-  { id: 97, round: 'quarterfinals', date: '09/07', city: 'Foxborough', slotA: 'Vencedor Jogo 89', slotB: 'Vencedor Jogo 90', next: 101 },
-  { id: 98, round: 'quarterfinals', date: '10/07', city: 'Inglewood', slotA: 'Vencedor Jogo 91', slotB: 'Vencedor Jogo 92', next: 101 },
-  { id: 99, round: 'quarterfinals', date: '11/07', city: 'Miami Gardens', slotA: 'Vencedor Jogo 93', slotB: 'Vencedor Jogo 94', next: 102 },
-  { id: 100, round: 'quarterfinals', date: '11/07', city: 'Kansas City', slotA: 'Vencedor Jogo 95', slotB: 'Vencedor Jogo 96', next: 102 },
+  { id: 97, round: 'quarterfinals', date: '09/07', hora: '17h00', city: 'Foxborough', slotA: 'Vencedor Jogo 89', slotB: 'Vencedor Jogo 90', next: 101 },
+  { id: 98, round: 'quarterfinals', date: '10/07', hora: '16h00', city: 'Inglewood', slotA: 'Vencedor Jogo 91', slotB: 'Vencedor Jogo 92', next: 101 },
+  { id: 99, round: 'quarterfinals', date: '11/07', hora: '18h00', city: 'Miami Gardens', slotA: 'Vencedor Jogo 93', slotB: 'Vencedor Jogo 94', next: 102 },
+  { id: 100, round: 'quarterfinals', date: '11/07', hora: '22h00', city: 'Kansas City', slotA: 'Vencedor Jogo 95', slotB: 'Vencedor Jogo 96', next: 102 },
 
   { id: 101, round: 'semifinals', date: '14/07', city: 'Arlington', slotA: 'Vencedor Jogo 97', slotB: 'Vencedor Jogo 98', next: 103, loserNext: 104 },
   { id: 102, round: 'semifinals', date: '15/07', city: 'Atlanta', slotA: 'Vencedor Jogo 99', slotB: 'Vencedor Jogo 100', next: 103, loserNext: 104 },
