@@ -87,10 +87,10 @@ const KNOCKOUT_OFFICIAL_RESULTS = {
   96: { officialM: 0, officialV: 0, winner: 'A' }, // Suíça x Colômbia
 
   // Quartas de final
-  97: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 89 x Vencedor Jogo 90
-  98: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 91 x Vencedor Jogo 92
-  99: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 93 x Vencedor Jogo 94
-  100: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 95 x Vencedor Jogo 96
+  97: { officialM: 0, officialV: 2, winner: 'B' }, // Marrocos x França
+  98: { officialM: null, officialV: null, winner: '' }, // Espanha x Bélgica
+  99: { officialM: null, officialV: null, winner: '' }, // Noruega x Inglaterra
+  100: { officialM: null, officialV: null, winner: '' }, // Argentina x Suíça
 
   // Semifinais
   101: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 97 x Vencedor Jogo 98
