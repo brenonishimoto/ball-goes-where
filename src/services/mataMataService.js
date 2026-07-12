@@ -89,8 +89,8 @@ const KNOCKOUT_OFFICIAL_RESULTS = {
   // Quartas de final
   97: { officialM: 0, officialV: 2, winner: 'B' }, // Marrocos x França
   98: { officialM: 2, officialV: 1, winner: 'A' }, // Espanha x Bélgica
-  99: { officialM: null, officialV: null, winner: '' }, // Noruega x Inglaterra
-  100: { officialM: null, officialV: null, winner: '' }, // Argentina x Suíça
+  99: { officialM: 1, officialV: 2, winner: 'B' }, // Noruega x Inglaterra
+  100: { officialM: 3, officialV: 1, winner: 'A' }, // Argentina x Suíça
 
   // Semifinais
   101: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 97 x Vencedor Jogo 98
