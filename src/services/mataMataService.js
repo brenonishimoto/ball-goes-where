@@ -93,8 +93,8 @@ const KNOCKOUT_OFFICIAL_RESULTS = {
   100: { officialM: 3, officialV: 1, winner: 'A' }, // Argentina x Suíça
 
   // Semifinais
-  101: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 97 x Vencedor Jogo 98
-  102: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 99 x Vencedor Jogo 100
+  101: { officialM: null, officialV: null, winner: '' }, // França x Espanha
+  102: { officialM: null, officialV: null, winner: '' }, // Inglaterra x Argentina
 
   // 3º Lugar
   104: { officialM: null, officialV: null, winner: '' }, // Perdedor Jogo 101 x Perdedor Jogo 102
