@@ -6,6 +6,8 @@ import {
   resolveDatabaseUrl,
   verifyAuthToken,
 } from '../../../src/server/auth.js'
+import { PHASE1_RESULTS } from '../../../src/services/phase1Results.js'
+import { calculatePhase1TotalScore } from '../../../src/services/phase1Scoring.js'
 
 export const config = {
   runtime: 'nodejs',
@@ -47,6 +49,40 @@ const normalizePredictions = (value) => {
   }
 
   return {}
+}
+
+const syncPhase1Score = async (databaseUrl, userId, phase1Predictions) => {
+  const phase1Score = calculatePhase1TotalScore(phase1Predictions, PHASE1_RESULTS)
+  const currentRows = await queryNeon(
+    databaseUrl,
+    `
+    SELECT phase2_score, phase3_score
+    FROM public.user_scores
+    WHERE user_id = $1
+    LIMIT 1
+  `,
+    [userId]
+  )
+
+  const phase2Score = Number(currentRows[0]?.phase2_score) || 0
+  const phase3Score = Number(currentRows[0]?.phase3_score) || 0
+  const totalScore = phase1Score + phase2Score + phase3Score
+
+  await queryNeon(
+    databaseUrl,
+    `
+    INSERT INTO public.user_scores (user_id, total_score, phase1_score, phase2_score, phase3_score, calculated_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, now(), now())
+    ON CONFLICT (user_id) DO UPDATE
+    SET total_score = EXCLUDED.total_score,
+        phase1_score = EXCLUDED.phase1_score,
+        phase2_score = EXCLUDED.phase2_score,
+        phase3_score = EXCLUDED.phase3_score,
+        calculated_at = now(),
+        updated_at = now()
+  `,
+    [userId, totalScore, phase1Score, phase2Score, phase3Score]
+  )
 }
 
 export default async function handler(request, response) {
@@ -119,43 +155,52 @@ export default async function handler(request, response) {
         sendJson(response, 403, { error: 'A Fase 1 está encerrada para novos palpites.' })
         return
       }
-    }
 
-    const body = await readJsonBody(request)
-    const phase1_predictions = normalizePredictions(body.phase1_predictions)
+      const body = await readJsonBody(request)
+      const phase1_predictions = normalizePredictions(body.phase1_predictions)
 
-    const rows = await queryNeon(
-      databaseUrl,
-      `
-      UPDATE public.user_predictions
-      SET phase1_predictions = $2::jsonb,
-          updated_at = now()
-      WHERE user_id = $1
-      RETURNING phase1_predictions
-    `,
-      [payload.sub, JSON.stringify(phase1_predictions)]
-    )
-
-    if (rows.length === 0) {
-      await queryNeon(
+      const rows = await queryNeon(
         databaseUrl,
         `
-        INSERT INTO public.user_predictions (user_id, phase1_predictions, updated_at)
-        VALUES ($1, $2::jsonb, now())
+        UPDATE public.user_predictions
+        SET phase1_predictions = $2::jsonb,
+            updated_at = now()
+        WHERE user_id = $1
+        RETURNING phase1_predictions
       `,
         [payload.sub, JSON.stringify(phase1_predictions)]
       )
+
+      if (rows.length === 0) {
+        await queryNeon(
+          databaseUrl,
+          `
+          INSERT INTO public.user_predictions (user_id, phase1_predictions, updated_at)
+          VALUES ($1, $2::jsonb, now())
+        `,
+          [payload.sub, JSON.stringify(phase1_predictions)]
+        )
+      }
+
+      const savedPredictions = rows.length ? normalizePredictions(rows[0].phase1_predictions) : phase1_predictions
+
+      try {
+        await syncPhase1Score(databaseUrl, payload.sub, savedPredictions)
+      } catch (scoreError) {
+        logAuthEvent('error', route, requestId, 'score sync failed', {
+          error: scoreError instanceof Error ? scoreError.message : String(scoreError),
+        })
+      }
+
+      logAuthEvent('info', route, requestId, 'request completed', {
+        method: request.method,
+        userId: payload.sub,
+        duration: Date.now() - startedAt,
+      })
+
+      sendJson(response, 200, { phase1_predictions: savedPredictions })
+      return
     }
-
-    const savedPredictions = rows.length ? normalizePredictions(rows[0].phase1_predictions) : phase1_predictions
-
-    logAuthEvent('info', route, requestId, 'request completed', {
-      method: request.method,
-      userId: payload.sub,
-      duration: Date.now() - startedAt,
-    })
-
-    sendJson(response, 200, { phase1_predictions: savedPredictions })
   } catch (error) {
     logAuthEvent('error', route, requestId, 'unexpected error', {
       error: error instanceof Error ? error.message : String(error),

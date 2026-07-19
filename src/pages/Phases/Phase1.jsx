@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { PHASE1_RESULTS } from '../../services/phase1Results';
+import { calculatePhase1FieldScore, calculatePhase1TotalScore } from '../../services/phase1Scoring';
 import { phase1Service } from '../../services/phase1Service';
 import './phase1.scss';
 
@@ -57,36 +58,18 @@ const normalizePredictions = (value) => {
   return { ...emptyPredictions };
 };
 
-const normalizeComparableValue = (value) => String(value ?? '')
-  .trim()
-  .toLowerCase()
-  .normalize('NFD')
-  .replace(/[\u0300-\u036f]/g, '');
-
 const getFieldStatus = (field, predictions) => {
   const officialResult = PHASE1_RESULTS[field.key];
-
-  if (!normalizeComparableValue(officialResult)) {
-    return {
-      status: 'pending',
-      label: 'Resultado: ---',
-      points: 0,
-    };
-  }
-
-  const isCorrect = normalizeComparableValue(predictions[field.key]) === normalizeComparableValue(officialResult);
+  const fieldScore = calculatePhase1FieldScore(field.key, predictions[field.key], officialResult);
 
   return {
-    status: isCorrect ? 'correct' : 'wrong',
-    label: `Resultado: ${officialResult}`,
-    points: isCorrect ? field.points : 0,
+    status: fieldScore.status,
+    label: officialResult ? `Resultado: ${officialResult}` : 'Resultado: ---',
+    points: fieldScore.points,
   };
 };
 
-const calculatePhase1Points = (predictions) => phase1Fields.reduce(
-  (total, field) => total + getFieldStatus(field, predictions).points,
-  0
-);
+const calculatePhase1Points = (predictions) => calculatePhase1TotalScore(predictions, PHASE1_RESULTS);
 
 const isPhase1Locked = true;
 

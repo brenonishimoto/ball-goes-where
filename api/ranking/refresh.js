@@ -6,6 +6,8 @@ import {
   verifyAuthToken,
 } from '../../src/server/auth.js'
 import { INITIAL_GAMES } from '../../src/services/gameService.js'
+import { PHASE1_RESULTS } from '../../src/services/phase1Results.js'
+import { calculatePhase1TotalScore } from '../../src/services/phase1Scoring.js'
 import { PHASE3_RESULTS } from '../../src/services/phase3Results.js'
 import { scoringService } from '../../src/services/scoringService.js'
 import { calculatePhase3TotalScore } from '../../src/services/phase3Scoring.js'
@@ -145,7 +147,7 @@ export default async function handler(request, response) {
     const predictions = await queryNeon(
       databaseUrl,
       `
-      SELECT user_id, phase2_predictions, phase3_predictions, updated_at
+      SELECT user_id, phase1_predictions, phase2_predictions, phase3_predictions, updated_at
       FROM public.user_predictions
     `
     )
@@ -154,23 +156,12 @@ export default async function handler(request, response) {
       predictions.map((row) => [
         row.user_id,
         {
+          phase1Predictions: normalizeObject(row.phase1_predictions),
           games: normalizeGames(row.phase2_predictions),
           phase3Predictions: normalizeObject(row.phase3_predictions),
           updatedAt: row.updated_at,
         },
       ])
-    )
-
-    const currentScores = await queryNeon(
-      databaseUrl,
-      `
-      SELECT user_id, phase1_score
-      FROM public.user_scores
-    `
-    )
-
-    const currentScoresByUserId = new Map(
-      currentScores.map((row) => [row.user_id, row])
     )
 
     const updates = []
@@ -179,8 +170,9 @@ export default async function handler(request, response) {
       const predictionRow = predictionsByUserId.get(user.id)
       const games = predictionRow ? enrichGames(predictionRow.games) : []
       const scorePayload = scoringService.calculateScorePayload(games)
-      const currentScore = currentScoresByUserId.get(user.id)
-      const phase1Score = Number(currentScore?.phase1_score) || 0
+      const phase1Score = predictionRow
+        ? calculatePhase1TotalScore(predictionRow.phase1Predictions, PHASE1_RESULTS)
+        : 0
       const phase2Score = Number(scorePayload.phase2Score) || 0
       const phase3Score = predictionRow
         ? calculatePhase3TotalScore(predictionRow.phase3Predictions, PHASE3_RESULTS)
