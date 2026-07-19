@@ -97,10 +97,10 @@ const KNOCKOUT_OFFICIAL_RESULTS = {
   102: { officialM: 1, officialV: 2, winner: 'B' }, // Inglaterra x Argentina
 
   // 3º Lugar
-  104: { officialM: null, officialV: null, winner: '' }, // Perdedor Jogo 101 x Perdedor Jogo 102
+  104: { officialM: 4, officialV: 6, winner: 'B' }, // França x Inglaterra
 
   // Final
-  103: { officialM: null, officialV: null, winner: '' }, // Vencedor Jogo 101 x Vencedor Jogo 102
+  103: { officialM: 1, officialV: 0, winner: 'A' }, // Espanha x Argentina
 };
 
 const resolveWinnerSide = (match) => {
