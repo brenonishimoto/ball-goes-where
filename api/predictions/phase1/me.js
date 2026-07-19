@@ -113,6 +113,14 @@ export default async function handler(request, response) {
       return
     }
 
+    if (request.method === 'PUT') {
+      const isPhase1Locked = true
+      if (isPhase1Locked) {
+        sendJson(response, 403, { error: 'A Fase 1 está encerrada para novos palpites.' })
+        return
+      }
+    }
+
     const body = await readJsonBody(request)
     const phase1_predictions = normalizePredictions(body.phase1_predictions)
 

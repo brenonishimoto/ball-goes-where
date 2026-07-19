@@ -198,6 +198,13 @@
       color: #9ca3af;
     }
 
+    &:disabled {
+      background-color: #f3f4f6;
+      color: #6b7280;
+      cursor: not-allowed;
+      border-color: #e5e7eb;
+    }
+
     &:focus {
       outline: none;
       border-color: #3b82f6;
@@ -214,6 +221,24 @@
     &[type='number'] {
       -moz-appearance: textfield;
     }
+  }
+}
+
+.phase1-locked-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  color: #991b1b;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+
+  .locked-icon {
+    font-size: 1.25rem;
   }
 }
 

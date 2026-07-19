@@ -88,6 +88,8 @@ const calculatePhase1Points = (predictions) => phase1Fields.reduce(
   0
 );
 
+const isPhase1Locked = true;
+
 export default function Phase1Page() {
   const { user, token } = useAuth();
   const { pushToast } = useToast();
@@ -141,6 +143,10 @@ export default function Phase1Page() {
 
   // Save predictions locally while typing
   const handleChange = (field, value) => {
+    if (isPhase1Locked) {
+      return;
+    }
+
     const updated = { ...normalizePredictions(predictions), [field]: value };
     setPredictions(updated);
 
@@ -148,6 +154,11 @@ export default function Phase1Page() {
   };
 
   const handleSave = async () => {
+    if (isPhase1Locked) {
+      pushToast({ type: 'warning', message: 'A Fase 1 está encerrada para novos palpites.' });
+      return;
+    }
+
     if (isSaving) {
       return;
     }
@@ -177,6 +188,9 @@ export default function Phase1Page() {
   };
 
   const handleClear = () => {
+    if (isPhase1Locked) {
+      return;
+    }
     const cleared = { ...emptyPredictions };
     setPredictions(cleared);
     localStorage.setItem(localStorageKey, JSON.stringify(cleared));
@@ -196,6 +210,13 @@ export default function Phase1Page() {
           <span className="phase1-score-label">Pontos</span>
         </div>
       </section>
+
+      {isPhase1Locked ? (
+        <div className="phase1-locked-banner" role="alert">
+          <span className="locked-icon">🔒</span>
+          <span>As apostas da Fase 01 estão encerradas. Não é possível alterar ou enviar novos palpites.</span>
+        </div>
+      ) : null}
 
       <section className="phase1-content">
         <div className="phase1-container">
@@ -217,6 +238,7 @@ export default function Phase1Page() {
                         placeholder={field.placeholder}
                         value={predictions[field.key]}
                         onChange={(e) => handleChange(field.key, e.target.value)}
+                        disabled={isPhase1Locked}
                         className="prediction-input"
                       />
                       <div className={`prediction-result prediction-result-${result.status}`}>
@@ -234,8 +256,8 @@ export default function Phase1Page() {
 
           {/* Botões de Ação */}
           <div className="phase1-actions">
-            <button type="button" className="btn-save" onClick={handleSave} disabled={isSaving}>
-              {isSaving ? 'Salvando...' : 'Salvar'}
+            <button type="button" className="btn-save" onClick={handleSave} disabled={isSaving || isPhase1Locked}>
+              {isPhase1Locked ? 'Palpites Encerrados' : isSaving ? 'Salvando...' : 'Salvar'}
             </button>
           </div>
         </div>
